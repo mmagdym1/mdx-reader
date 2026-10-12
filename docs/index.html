@@ -1,0 +1,2350 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MDX Reader — Arabic &amp; RTL Markdown Viewer and Editor</title>
+<meta name="description" content="Offline Markdown viewer and editor for Windows and the web, with correct mixed Arabic-English bidi rendering, smart RTL detection, and zero runtime dependencies.">
+<meta name="theme-color" content="#4f46e5">
+<link rel="canonical" href="https://mmagdym1.github.io/mdx-reader/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MDX Reader">
+<meta property="og:title" content="MDX Reader — Arabic &amp; RTL Markdown Viewer and Editor">
+<meta property="og:description" content="Read and edit mixed Arabic-English Markdown without broken direction or punctuation. Offline and dependency-free at runtime.">
+<meta property="og:url" content="https://mmagdym1.github.io/mdx-reader/">
+<meta property="og:image" content="https://mmagdym1.github.io/mdx-reader/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MDX Reader — Arabic &amp; RTL Markdown Viewer and Editor">
+<meta name="twitter:description" content="Correct mixed Arabic-English Markdown rendering in an offline Windows app and web version.">
+<meta name="twitter:image" content="https://mmagdym1.github.io/mdx-reader/og-image.png">
+<style>
+/* ==========================================================================
+   MDX Reader — التنسيقات
+   كل الأبعاد بخصائص منطقية (inline-start/end) عشان تشتغل RTL و LTR بنفس الجودة
+   ========================================================================== */
+
+/* ------------------------------- الثيمات -------------------------------- */
+:root {
+  --ui-font: "Segoe UI", "Segoe UI Variable", Tahoma, system-ui, sans-serif;
+  --ar-font: "Segoe UI", "IBM Plex Sans Arabic", "Noto Sans Arabic", "Dubai",
+             Tahoma, "Traditional Arabic", sans-serif;
+  --mono-font: "Cascadia Code", "Cascadia Mono", "JetBrains Mono", Consolas,
+               "Courier New", monospace;
+  --body-size: 17px;
+  --line-height: 2;
+  --content-width: 900px;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --transition: .16s ease;
+}
+
+/* داكن (افتراضي) */
+[data-theme="dark"] {
+  --bg: #0d1117;
+  --bg-2: #161b22;
+  --bg-3: #1c2128;
+  --bg-hover: #21262d;
+  --fg: #e6edf3;
+  --fg-2: #adbac7;
+  --fg-3: #768390;
+  --border: #30363d;
+  --border-2: #21262d;
+  --accent: #58a6ff;
+  --accent-2: #1f6feb;
+  --accent-soft: rgba(88, 166, 255, .12);
+  --quote-bar: #3d444d;
+  --code-bg: #161b22;
+  --code-inline-bg: rgba(110, 118, 129, .28);
+  --mark: #9e6a03;
+  --shadow: 0 8px 28px rgba(0, 0, 0, .5);
+  --tok-kw: #ff7b72;
+  --tok-str: #a5d6ff;
+  --tok-cmt: #8b949e;
+  --tok-num: #79c0ff;
+  --tok-fn: #d2a8ff;
+  color-scheme: dark;
+}
+
+/* فاتح */
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-2: #f6f8fa;
+  --bg-3: #eef1f4;
+  --bg-hover: #eaeef2;
+  --fg: #1f2328;
+  --fg-2: #424a53;
+  --fg-3: #6e7781;
+  --border: #d0d7de;
+  --border-2: #e4e8ed;
+  --accent: #0969da;
+  --accent-2: #0550ae;
+  --accent-soft: rgba(9, 105, 218, .1);
+  --quote-bar: #d0d7de;
+  --code-bg: #f6f8fa;
+  --code-inline-bg: rgba(175, 184, 193, .28);
+  --mark: #fff8c5;
+  --shadow: 0 8px 24px rgba(31, 35, 40, .12);
+  --tok-kw: #cf222e;
+  --tok-str: #0a3069;
+  --tok-cmt: #6e7781;
+  --tok-num: #0550ae;
+  --tok-fn: #8250df;
+  color-scheme: light;
+}
+
+/* سيبيا — مريح للقراءة الطويلة */
+[data-theme="sepia"] {
+  --bg: #f4ecd8;
+  --bg-2: #ece1c8;
+  --bg-3: #e4d7ba;
+  --bg-hover: #e0d2b2;
+  --fg: #3b3122;
+  --fg-2: #5b4d38;
+  --fg-3: #857352;
+  --border: #d6c5a3;
+  --border-2: #e2d5ba;
+  --accent: #9a5b23;
+  --accent-2: #7c4718;
+  --accent-soft: rgba(154, 91, 35, .1);
+  --quote-bar: #cbb894;
+  --code-bg: #ece1c8;
+  --code-inline-bg: rgba(154, 91, 35, .14);
+  --mark: #f0d999;
+  --shadow: 0 8px 24px rgba(59, 49, 34, .15);
+  --tok-kw: #9c2c2c;
+  --tok-str: #3a5a2a;
+  --tok-cmt: #8c7c5e;
+  --tok-num: #7a4a12;
+  --tok-fn: #6a3d8f;
+  color-scheme: light;
+}
+
+/* ليلي دافئ */
+[data-theme="midnight"] {
+  --bg: #10131a;
+  --bg-2: #171b25;
+  --bg-3: #1e2330;
+  --bg-hover: #252b3a;
+  --fg: #dfe4ee;
+  --fg-2: #b3bbcc;
+  --fg-3: #7d8699;
+  --border: #2b3242;
+  --border-2: #212736;
+  --accent: #8ab4f8;
+  --accent-2: #5b8def;
+  --accent-soft: rgba(138, 180, 248, .12);
+  --quote-bar: #3a4256;
+  --code-bg: #171b25;
+  --code-inline-bg: rgba(138, 180, 248, .14);
+  --mark: #7a5c12;
+  --shadow: 0 8px 28px rgba(0, 0, 0, .55);
+  --tok-kw: #f28b82;
+  --tok-str: #a8dab5;
+  --tok-cmt: #79839a;
+  --tok-num: #8ab4f8;
+  --tok-fn: #d7aefb;
+  color-scheme: dark;
+}
+
+/* ------------------------------ الأساسيات ------------------------------- */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--ar-font);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--accent-soft); }
+
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+  border: 3px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--fg-3); }
+
+/* ------------------------------- التخطيط -------------------------------- */
+.app {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  height: 100vh;
+}
+
+/* شريط الأدوات */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  font-family: var(--ui-font);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+.toolbar > * { -webkit-app-region: no-drag; }
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  margin-inline-end: 6px;
+  white-space: nowrap;
+}
+.brand .dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--tok-fn));
+}
+
+.tb-sep {
+  width: 1px; height: 22px;
+  background: var(--border);
+  margin: 0 4px;
+}
+.spacer { flex: 1 1 auto; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--fg-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.btn:hover { background: var(--bg-hover); color: var(--fg); }
+.btn:active { transform: translateY(1px); }
+.btn.primary {
+  background: var(--accent-2);
+  color: #fff;
+  border-color: var(--accent-2);
+}
+.btn.primary:hover { filter: brightness(1.12); background: var(--accent-2); color: #fff; }
+.btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.btn .ico { font-size: 15px; line-height: 1; }
+
+.select, .search-input {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--fg-2);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 9px;
+  outline: none;
+  transition: var(--transition);
+  max-width: 170px;
+}
+.select:hover, .search-input:hover { border-color: var(--fg-3); }
+.select:focus, .search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.search-input { width: 190px; }
+
+.seg {
+  display: inline-flex;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.seg .btn { border-radius: 0; border: 0; padding: 6px 12px; }
+.seg .btn.active { background: var(--accent-2); color: #fff; }
+
+/* شريط المسار */
+.pathbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-2);
+  font-family: var(--ui-font);
+  font-size: 12px;
+  color: var(--fg-3);
+  min-height: 30px;
+}
+.pathbar .file-name { color: var(--fg-2); font-weight: 600; }
+.pathbar .file-path { direction: ltr; unicode-bidi: isolate; opacity: .8; }
+.dirty-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  display: none;
+}
+.is-dirty .dirty-dot { display: inline-block; }
+
+/* المساحة الرئيسية */
+.main {
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* الفهرس الجانبي */
+.toc {
+  width: 280px;
+  flex: 0 0 280px;
+  background: var(--bg-2);
+  border-inline-end: 1px solid var(--border);
+  overflow: auto;
+  padding: 14px 10px 40px;
+  font-family: var(--ar-font);
+  font-size: 13.5px;
+  line-height: 1.7;
+  transition: var(--transition);
+}
+.toc-hidden .toc { display: none; }
+.toc h4 {
+  margin: 0 0 10px;
+  padding-inline-start: 8px;
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  font-family: var(--ui-font);
+}
+.toc a {
+  display: block;
+  padding: 5px 10px;
+  color: var(--fg-2);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  border-inline-start: 2px solid transparent;
+  transition: var(--transition);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.toc a:hover { background: var(--bg-hover); color: var(--fg); }
+.toc a.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-inline-start-color: var(--accent);
+  font-weight: 600;
+}
+.toc a.lvl-1 { font-weight: 700; }
+.toc a.lvl-2 { padding-inline-start: 20px; }
+.toc a.lvl-3 { padding-inline-start: 32px; font-size: 13px; }
+.toc a.lvl-4 { padding-inline-start: 44px; font-size: 12.5px; color: var(--fg-3); }
+.toc a.lvl-5, .toc a.lvl-6 { padding-inline-start: 56px; font-size: 12px; color: var(--fg-3); }
+
+/* الأجزاء */
+.panes { flex: 1 1 auto; display: flex; min-width: 0; }
+.pane { flex: 1 1 50%; min-width: 0; overflow: auto; position: relative; }
+.pane.hidden { display: none; }
+.pane-editor { border-inline-end: 1px solid var(--border); background: var(--bg); }
+.split-only-preview .pane-editor { display: none; }
+.split-only-editor .pane-preview { display: none; }
+
+#editor {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  border: 0;
+  outline: none;
+  resize: none;
+  padding: 26px 30px 120px;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--mono-font);
+  font-size: calc(var(--body-size) - 2px);
+  line-height: 1.9;
+  tab-size: 2;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+#editor::placeholder { color: var(--fg-3); }
+
+/* ============================== محتوى المستند ============================= */
+.md-body {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 34px 40px 140px;
+  font-family: var(--ar-font);
+  font-size: var(--body-size);
+  line-height: var(--line-height);
+  color: var(--fg);
+  text-align: start;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.md-body.wide { max-width: none; }
+
+/* ★ حجر الأساس لدعم العربية: عزل الاتجاه لأي نص لاتيني/كود داخل نص عربي */
+.md-body code,
+.md-body kbd,
+.md-body samp,
+.md-body var,
+.md-body .md-code-inline,
+.md-body .md-math,
+.md-body a[dir="ltr"],
+.md-body bdi {
+  unicode-bidi: isolate;
+}
+.md-body pre,
+.md-body pre code {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+/* العناوين */
+.md-body .md-h {
+  font-weight: 700;
+  line-height: 1.55;
+  margin: 1.9em 0 .7em;
+  scroll-margin-top: 24px;
+  position: relative;
+}
+.md-body .md-h:first-child { margin-top: 0; }
+.md-body h1.md-h {
+  font-size: 1.95em;
+  padding-bottom: .35em;
+  border-bottom: 1px solid var(--border);
+}
+.md-body h2.md-h {
+  font-size: 1.55em;
+  padding-bottom: .3em;
+  border-bottom: 1px solid var(--border-2);
+}
+.md-body h3.md-h { font-size: 1.3em; }
+.md-body h4.md-h { font-size: 1.12em; }
+.md-body h5.md-h { font-size: 1em; color: var(--fg-2); }
+.md-body h6.md-h { font-size: .92em; color: var(--fg-3); }
+
+.md-anchor {
+  position: absolute;
+  inset-inline-start: -.85em;
+  color: var(--fg-3);
+  text-decoration: none;
+  opacity: 0;
+  font-weight: 400;
+  transition: var(--transition);
+}
+.md-h:hover .md-anchor { opacity: .55; }
+.md-anchor:hover { opacity: 1 !important; color: var(--accent); }
+
+/* الفقرات */
+.md-body .md-p { margin: 0 0 1.15em; }
+.md-body .md-p:last-child { margin-bottom: 0; }
+
+/* الروابط */
+.md-body .md-link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: var(--transition);
+}
+.md-body .md-link:hover {
+  border-bottom-color: var(--accent);
+}
+
+/* القوائم */
+.md-body .md-list {
+  margin: 0 0 1.15em;
+  padding-inline-start: 1.9em;
+}
+.md-body .md-list .md-list { margin-bottom: .3em; margin-top: .3em; }
+.md-body .md-li { margin: .32em 0; }
+.md-body .md-loose > .md-li { margin: .75em 0; }
+.md-body .md-list::marker,
+.md-body .md-li::marker { color: var(--fg-3); }
+.md-body .md-tasklist { list-style: none; padding-inline-start: .4em; }
+.md-body .md-task { display: flex; align-items: flex-start; gap: .55em; }
+.md-body .md-check {
+  margin-top: .55em;
+  accent-color: var(--accent);
+  flex: 0 0 auto;
+}
+
+/* الاقتباس */
+.md-body .md-quote {
+  margin: 0 0 1.2em;
+  padding: .1em 1.1em;
+  color: var(--fg-2);
+  border-inline-start: 4px solid var(--quote-bar);
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+}
+.md-body .md-quote > :last-child { margin-bottom: 0; }
+.md-body .md-quote .md-p { padding: .55em 0; }
+
+/* تنبيهات GitHub */
+.md-callout { border-inline-start-width: 4px; }
+.md-callout-title {
+  font-weight: 700;
+  margin-top: .7em;
+  font-size: .95em;
+  letter-spacing: .02em;
+}
+.md-callout-note, .md-callout-info, .md-callout-ملاحظة { border-inline-start-color: #58a6ff; }
+.md-callout-note .md-callout-title { color: #58a6ff; }
+.md-callout-tip { border-inline-start-color: #3fb950; }
+.md-callout-tip .md-callout-title { color: #3fb950; }
+.md-callout-important, .md-callout-هام { border-inline-start-color: #a371f7; }
+.md-callout-important .md-callout-title { color: #a371f7; }
+.md-callout-warning, .md-callout-تنبيه { border-inline-start-color: #d29922; }
+.md-callout-warning .md-callout-title { color: #d29922; }
+.md-callout-caution { border-inline-start-color: #f85149; }
+.md-callout-caution .md-callout-title { color: #f85149; }
+
+/* الجداول */
+.md-tablewrap {
+  overflow-x: auto;
+  margin: 0 0 1.35em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+}
+.md-body .md-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: .95em;
+  line-height: 1.75;
+}
+.md-body .md-table th,
+.md-body .md-table td {
+  border: 1px solid var(--border);
+  border-inline-start: 0;
+  border-top: 0;
+  padding: .62em .95em;
+  text-align: start;
+  vertical-align: middle;
+}
+.md-body .md-table tr > *:last-child { border-inline-end: 0; }
+.md-body .md-table th {
+  background: var(--bg-3);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.md-body .md-table tbody tr:last-child > * { border-bottom: 0; }
+.md-body .md-table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--bg-3) 45%, transparent); }
+.md-body .md-table tbody tr:hover { background: var(--bg-hover); }
+
+/* كتل الكود */
+.md-codeblock {
+  margin: 0 0 1.35em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--code-bg);
+  overflow: hidden;
+  direction: ltr;
+}
+.md-codebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 12px;
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--ui-font);
+  font-size: 11px;
+  color: var(--fg-3);
+  direction: ltr;
+}
+.md-lang { text-transform: uppercase; letter-spacing: .08em; }
+.md-copy {
+  font-family: var(--ui-font);
+  font-size: 11px;
+  color: var(--fg-3);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 2px 9px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.md-copy:hover { color: var(--fg); border-color: var(--fg-3); background: var(--bg-hover); }
+.md-codeblock pre {
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: var(--mono-font);
+  font-size: .875em;
+  line-height: 1.75;
+}
+.md-codeblock code {
+  font-family: inherit;
+  background: none;
+  padding: 0;
+  white-space: pre;
+}
+
+/* كود سطري */
+.md-body .md-code-inline {
+  font-family: var(--mono-font);
+  font-size: .87em;
+  background: var(--code-inline-bg);
+  padding: .16em .42em;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.md-body .md-math {
+  font-family: var(--mono-font);
+  font-size: .92em;
+  font-style: italic;
+  color: var(--tok-fn);
+}
+
+/* التلوين */
+.tok-kw  { color: var(--tok-kw); }
+.tok-str { color: var(--tok-str); }
+.tok-cmt { color: var(--tok-cmt); font-style: italic; }
+.tok-num { color: var(--tok-num); }
+.tok-fn  { color: var(--tok-fn); }
+
+/* عناصر أخرى */
+.md-body .md-hr {
+  border: 0;
+  height: 1px;
+  background: var(--border);
+  margin: 2.2em 0;
+}
+.md-body .md-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  margin: .4em 0;
+  background: var(--bg-2);
+}
+.md-body mark { background: var(--mark); color: inherit; padding: 0 .18em; border-radius: 3px; }
+.md-body kbd {
+  font-family: var(--mono-font);
+  font-size: .82em;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: .12em .45em;
+}
+.md-body del { opacity: .65; }
+.md-frontmatter {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  margin-bottom: 1.6em;
+  background: var(--bg-2);
+  font-size: .85em;
+  color: var(--fg-3);
+}
+.md-frontmatter pre { margin: .5em 0; font-family: var(--mono-font); white-space: pre-wrap; }
+.md-footnotes { font-size: .9em; color: var(--fg-2); margin-top: 2.5em; }
+.md-fnref a { color: var(--accent); text-decoration: none; }
+.md-fnback { text-decoration: none; color: var(--accent); }
+.md-rawhtml img { max-width: 100%; border-radius: var(--radius); }
+
+/* إبراز نتائج البحث */
+.search-hit { background: var(--mark); color: inherit; border-radius: 3px; }
+.search-hit.current { outline: 2px solid var(--accent); background: var(--accent-soft); }
+
+/* شاشة الترحيب */
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 18px;
+  color: var(--fg-3);
+  font-family: var(--ar-font);
+  text-align: center;
+  padding: 40px;
+}
+.welcome .big { font-size: 62px; line-height: 1; opacity: .55; }
+.welcome h2 { margin: 0; font-size: 21px; color: var(--fg-2); font-weight: 700; }
+.welcome p { margin: 0; font-size: 14px; max-width: 460px; line-height: 1.9; }
+.welcome .kbds { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+.welcome .kbds kbd {
+  font-family: var(--mono-font); font-size: 12px;
+  background: var(--bg-3); border: 1px solid var(--border);
+  border-radius: 5px; padding: 3px 8px; color: var(--fg-2);
+}
+
+/* منطقة السحب والإفلات */
+.dropzone {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(3px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+  font-family: var(--ar-font);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 3px dashed var(--accent);
+}
+.dragging .dropzone { display: flex; }
+
+/* شريط الحالة */
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 5px 14px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--border);
+  font-family: var(--ui-font);
+  font-size: 11.5px;
+  color: var(--fg-3);
+  min-height: 28px;
+}
+.statusbar .sb-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.statusbar .ok { color: #3fb950; }
+
+/* التنبيه المنبثق */
+.toast {
+  position: fixed;
+  inset-block-end: 44px;
+  inset-inline-start: 50%;
+  transform: translateX(50%) translateY(20px);
+  background: var(--bg-3);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+  padding: 10px 20px;
+  font-family: var(--ar-font);
+  font-size: 13.5px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  z-index: 100;
+}
+[dir="ltr"] .toast { transform: translateX(-50%) translateY(20px); }
+.toast.show { opacity: 1; transform: translateX(50%) translateY(0); }
+[dir="ltr"] .toast.show { transform: translateX(-50%) translateY(0); }
+
+/* نافذة الإعدادات */
+.modal-back {
+  position: fixed; inset: 0; z-index: 120;
+  background: rgba(0, 0, 0, .55);
+  display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(2px);
+}
+.modal-back.show { display: flex; }
+.modal {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  width: min(560px, 92vw);
+  max-height: 86vh;
+  overflow: auto;
+  padding: 22px 26px 26px;
+  font-family: var(--ar-font);
+}
+.modal h3 { margin: 0 0 4px; font-size: 18px; }
+.modal .sub { margin: 0 0 18px; font-size: 12.5px; color: var(--fg-3); }
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--border-2);
+}
+.row:last-of-type { border-bottom: 0; }
+.row label { font-size: 14px; color: var(--fg-2); }
+.row .hint { display: block; font-size: 11.5px; color: var(--fg-3); margin-top: 2px; }
+.row input[type="range"] { width: 170px; accent-color: var(--accent); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+/* الطباعة / تصدير PDF */
+@media print {
+  .toolbar, .pathbar, .statusbar, .toc, .pane-editor, .toast, .dropzone, .md-copy, .md-anchor { display: none !important; }
+  html, body, .app, .main, .panes, .pane { height: auto; overflow: visible; display: block; }
+  .md-body { max-width: none; padding: 0; color: #000; font-size: 12pt; line-height: 1.9; }
+  .md-codeblock, .md-tablewrap, .md-quote { break-inside: avoid; }
+  .md-h { break-after: avoid; }
+  a { color: #000 !important; }
+}
+
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ============================ شريط الأدوات ============================ -->
+  <div class="toolbar">
+    <div class="brand"><span class="dot"></span><span>MDX</span></div>
+
+    <button class="btn" id="btnOpen"    title="Ctrl+O"><span class="ico">📂</span><span data-i18n="open">فتح</span></button>
+    <button class="btn" id="btnSave"    title="Ctrl+S"><span class="ico">💾</span><span data-i18n="save">حفظ</span></button>
+    <button class="btn" id="btnSaveAs"  title="Ctrl+Shift+S"><span class="ico">📄</span><span data-i18n="saveAs">حفظ باسم</span></button>
+
+    <div class="tb-sep"></div>
+
+    <div class="seg" id="viewSeg">
+      <button class="btn active" data-view="preview" title="Ctrl+1"><span data-i18n="viewPreview">معاينة</span></button>
+      <button class="btn"        data-view="split"   title="Ctrl+2"><span data-i18n="viewSplit">مقسوم</span></button>
+      <button class="btn"        data-view="editor"  title="Ctrl+3"><span data-i18n="viewEditor">تحرير</span></button>
+    </div>
+
+    <button class="btn active" id="btnToc" title="Ctrl+\"><span class="ico">☰</span><span data-i18n="toc">الفهرس</span></button>
+
+    <div class="tb-sep"></div>
+
+    <input class="search-input" id="search" type="search" data-i18n-ph="searchPh" placeholder="بحث في المستند…">
+    <button class="btn" id="btnPrev" title="Shift+Enter">▲</button>
+    <button class="btn" id="btnNext" title="Enter">▼</button>
+    <span class="sb-item" id="searchCount" style="font-size:11.5px;color:var(--fg-3)"></span>
+
+    <div class="spacer"></div>
+
+    <!-- لغة الواجهة -->
+    <select class="select" id="uiLang" title="لغة الواجهة / UI language">
+      <option value="ar">🌐 العربية</option>
+      <option value="en">🌐 English</option>
+    </select>
+
+    <!-- اتجاه العرض -->
+    <select class="select" id="dirSel" title="اتجاه النص">
+      <option value="smart" data-i18n="dirSmart">🧠 ذكي — عربي = RTL</option>
+      <option value="rtl"   data-i18n="dirRtl">→ فرض من اليمين لليسار</option>
+      <option value="ltr"   data-i18n="dirLtr">← فرض من اليسار لليمين</option>
+      <option value="auto"  data-i18n="dirAuto">↔ حسب أول حرف</option>
+    </select>
+
+    <!-- الثيم -->
+    <select class="select" id="themeSel" title="المظهر">
+      <option value="dark"     data-i18n="thDark">🌙 داكن</option>
+      <option value="midnight" data-i18n="thMid">🌌 ليلي</option>
+      <option value="light"    data-i18n="thLight">☀️ فاتح</option>
+      <option value="sepia"    data-i18n="thSepia">📜 سيبيا</option>
+    </select>
+
+    <button class="btn" id="btnSettings" title="Ctrl+,"><span class="ico">⚙️</span></button>
+    <button class="btn" id="btnPrint" title="Ctrl+P"><span class="ico">🖨️</span></button>
+  </div>
+
+  <!-- ============================= شريط المسار ============================ -->
+  <div class="pathbar" id="pathbar">
+    <span class="dirty-dot"></span>
+    <span class="file-name" id="fileName" data-i18n="noFile">لا يوجد ملف مفتوح</span>
+    <span class="file-path" id="filePath"></span>
+  </div>
+
+  <!-- ============================== المحتوى ============================== -->
+  <div class="main" id="main">
+    <nav class="toc" id="toc">
+      <h4 data-i18n="outline">محتويات المستند</h4>
+      <div id="tocList"></div>
+    </nav>
+
+    <div class="panes" id="panes">
+      <div class="pane pane-editor" id="paneEditor">
+        <textarea id="editor" spellcheck="false" data-i18n-ph="editorPh"
+          placeholder="اكتب هنا بالعربي أو English بحرية…"></textarea>
+      </div>
+      <div class="pane pane-preview" id="panePreview">
+        <div class="md-body" id="preview">
+          <div class="welcome" id="welcome">
+            <div class="big">📖</div>
+            <h2 data-i18n="welcomeTitle">عارض ومحرر Markdown بدعم عربي كامل</h2>
+            <p data-i18n="welcomeText">افتح ملف <b>.md</b> أو اسحبه وأفلته هنا. النص العربي والإنجليزي المختلط يُعرض بشكل صحيح تلقائيًا.</p>
+            <div class="kbds">
+              <kbd>Ctrl+O</kbd><kbd>Ctrl+S</kbd><kbd>Ctrl+2</kbd><kbd>Ctrl+F</kbd><kbd>Ctrl+,</kbd>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================= شريط الحالة ============================ -->
+  <div class="statusbar">
+    <span class="sb-item"><span data-i18n="words">كلمات</span>: <b id="stWords">0</b></span>
+    <span class="sb-item"><span data-i18n="chars">حروف</span>: <b id="stChars">0</b></span>
+    <span class="sb-item"><span data-i18n="lines">أسطر</span>: <b id="stLines">0</b></span>
+    <span class="sb-item"><span data-i18n="readTime">وقت القراءة</span>: <b id="stRead">0</b></span>
+    <div class="spacer"></div>
+    <span class="sb-item" id="stMode">—</span>
+    <span class="sb-item" id="stSaved"></span>
+  </div>
+</div>
+
+<!-- ============================ السحب والإفلات =========================== -->
+<div class="dropzone" id="dropzone"><span data-i18n="dropHere">أفلت ملف .md هنا</span></div>
+
+<!-- ============================== التنبيهات ============================== -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================== الإعدادات ============================== -->
+<div class="modal-back" id="settingsBack">
+  <div class="modal">
+    <h3 data-i18n="settings">الإعدادات</h3>
+    <p class="sub" data-i18n="settingsSub">كل الإعدادات تُحفظ تلقائيًا</p>
+
+    <div class="row">
+      <label>
+        <span data-i18n="fontFamily">خط العرض</span>
+        <span class="hint" data-i18n="fontFamilyHint">اختر خطًا مثبتًا على جهازك</span>
+      </label>
+      <select class="select" id="fontSel">
+        <option value='"Segoe UI","IBM Plex Sans Arabic","Noto Sans Arabic",Tahoma,sans-serif'>Segoe UI (افتراضي)</option>
+        <option value='Tahoma,"Segoe UI",sans-serif'>Tahoma</option>
+        <option value='"IBM Plex Sans Arabic","Segoe UI",sans-serif'>IBM Plex Sans Arabic</option>
+        <option value='"Noto Naskh Arabic","Traditional Arabic",serif'>Noto Naskh Arabic</option>
+        <option value='"Dubai","Segoe UI",sans-serif'>Dubai</option>
+        <option value='"Cairo","Segoe UI",sans-serif'>Cairo</option>
+        <option value='"Amiri","Traditional Arabic",serif'>Amiri</option>
+        <option value='"Traditional Arabic",serif'>Traditional Arabic</option>
+        <option value='"Arial",sans-serif'>Arial</option>
+        <option value='"Times New Roman",serif'>Times New Roman</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label><span data-i18n="fontSize">حجم الخط</span> <span class="hint"><span id="fsVal">17</span> px</span></label>
+      <input type="range" id="fontSize" min="12" max="30" step="1" value="17">
+    </div>
+
+    <div class="row">
+      <label><span data-i18n="lineHeight">تباعد الأسطر</span> <span class="hint"><span id="lhVal">2.0</span></span></label>
+      <input type="range" id="lineHeight" min="1.4" max="2.8" step="0.1" value="2">
+    </div>
+
+    <div class="row">
+      <label><span data-i18n="contentWidth">عرض النص</span> <span class="hint"><span id="cwVal">900</span> px</span></label>
+      <input type="range" id="contentWidth" min="600" max="1600" step="20" value="900">
+    </div>
+
+    <div class="row">
+      <label><span data-i18n="syncScroll">تزامن التمرير في الوضع المقسوم</span></label>
+      <input type="checkbox" id="syncScroll" checked>
+    </div>
+
+    <div class="row">
+      <label>
+        <span data-i18n="autoSave">حفظ تلقائي</span>
+        <span class="hint" data-i18n="autoSaveHint">يحفظ الملف بعد ثانيتين من آخر تعديل</span>
+      </label>
+      <input type="checkbox" id="autoSave">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" id="btnExportHtml"><span data-i18n="exportHtml">تصدير HTML</span></button>
+      <button class="btn" id="btnResetSettings"><span data-i18n="reset">استعادة الافتراضي</span></button>
+      <button class="btn primary" id="btnCloseSettings"><span data-i18n="done">تم</span></button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="filePicker" accept=".md,.markdown,.mdown,.mkd,.txt,.mdx" style="display:none">
+
+<script>
+/* ==========================================================================
+   MDX Reader — محرك Markdown داخلي (بدون أي مكتبات خارجية)
+   مصمم خصيصًا لدعم العربية + الإنجليزية + النص المختلط بدون مشاكل bidi.
+   القاعدة الذهبية: كل عنصر كتلي ياخد dir="auto"، وكل نص لاتيني/كود
+   ياخد عزل اتجاهي (bdi / unicode-bidi: isolate).
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  /* ----------------------------- أدوات مساعدة ---------------------------- */
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function escAttr(s) {
+    return esc(s).replace(/'/g, '&#39;');
+  }
+
+  // روابط آمنة فقط
+  function safeUrl(url) {
+    var u = String(url || '').trim();
+    if (/^\s*javascript:/i.test(u) || /^\s*vbscript:/i.test(u)) return '#';
+    return u;
+  }
+
+  // توليد معرّف (id) يدعم العربية
+  function slugify(text, used) {
+    var s = String(text)
+      .replace(/<[^>]+>/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s ]+/g, '-')
+      .replace(/[^؀-ۿݐ-ݿ\w\-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    if (!s) s = 'sec';
+    if (used) {
+      var base = s, n = 1;
+      while (used[s]) { s = base + '-' + (++n); }
+      used[s] = true;
+    }
+    return s;
+  }
+
+  // هل النص يبدأ بحرف عربي؟ (لتحديد الاتجاه يدويًا عند الحاجة)
+  var RTL_RE = /[֑-߿יִ-﷽ﹰ-ﻼ]/;
+  var LTR_RE = /[A-Za-zÀ-ɏ]/;
+
+  // حروف عربية وحروف لاتينية (للعدّ، مش لأول حرف)
+  var AR_G = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/g;
+  var LA_G = /[A-Za-zÀ-ɏ]/g;
+
+  // نسبة العربي اللي بعدها نعتبر النص عربي بالكامل (20%)
+  var AR_RATIO = 0.2;
+
+  // ينضّف النص من الكود والروابط والوسوم قبل العدّ
+  function plainOf(text) {
+    return String(text)
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/`[^`]*`/g, ' ')
+      .replace(/https?:\/\/\S+/g, ' ')
+      .replace(/<[^>]*>/g, ' ');
+  }
+
+  /* اتجاه النص الذكي:
+     الاعتماد على "أول حرف" (dir=auto) بيكسر العناوين والجمل اللي بتبدأ
+     بكلمة إنجليزية وباقيها عربي. فبنعدّ الحروف: لو نسبة العربي معتبرة
+     يبقى البلوك كله RTL، ولو مفيش عربي خالص يبقى LTR. */
+  function detectDir(text) {
+    var t = plainOf(text);
+    var ar = (t.match(AR_G) || []).length;
+    var la = (t.match(LA_G) || []).length;
+    if (!ar && !la) return 'auto';
+    if (!ar) return 'ltr';
+    if (!la) return 'rtl';
+    return (ar / (ar + la) >= AR_RATIO) ? 'rtl' : 'ltr';
+  }
+
+  // وضع الاتجاه الحالي: smart | rtl | ltr | auto
+  var DIRMODE = 'smart';
+
+  // يرجّع سمة dir الجاهزة للحقن في الوسم (أو فراغ لو الأنسب يرث من الأب)
+  function dattr(text) {
+    if (DIRMODE === 'rtl') return ' dir="rtl"';
+    if (DIRMODE === 'ltr') return ' dir="ltr"';
+    if (DIRMODE === 'auto') return ' dir="auto"';
+    var d = detectDir(text);
+    return d === 'auto' ? '' : ' dir="' + d + '"';
+  }
+
+  /* --------------------------- المعالجة السطرية --------------------------- */
+
+  function matchClose(src, start, open, close) {
+    // يرجّع فهرس القوس المغلق المطابق
+    var depth = 0;
+    for (var i = start; i < src.length; i++) {
+      var c = src[i];
+      if (c === '\\') { i++; continue; }
+      if (c === open) depth++;
+      else if (c === close) { depth--; if (depth === 0) return i; }
+    }
+    return -1;
+  }
+
+  function parseLinkDest(src, i) {
+    // src[i] === '('  → يرجّع {href, title, end}
+    var end = matchClose(src, i, '(', ')');
+    if (end === -1) return null;
+    var raw = src.slice(i + 1, end).trim();
+    var href = raw, title = '';
+    var tm = /^(<[^>]*>|\S+)\s+["'(]([\s\S]*)["')]$/.exec(raw);
+    if (tm) { href = tm[1]; title = tm[2]; }
+    href = href.replace(/^<|>$/g, '');
+    return { href: href, title: title, end: end };
+  }
+
+  function inline(src, ctx) {
+    var out = '';
+    var i = 0;
+    var n = src.length;
+
+    while (i < n) {
+      var c = src[i];
+
+      /* --- هروب \x --- */
+      if (c === '\\' && i + 1 < n && /[\\`*_{}\[\]()#+\-.!>~|"']/.test(src[i + 1])) {
+        out += esc(src[i + 1]); i += 2; continue;
+      }
+
+      /* --- كود سطري `code` : يُعزل اتجاهيًا دائمًا --- */
+      if (c === '`') {
+        var cm = /^(`+)([\s\S]*?[^`])\1(?!`)/.exec(src.slice(i));
+        if (cm) {
+          var code = cm[2];
+          if (/^ /.test(code) && / $/.test(code) && /[^ ]/.test(code)) code = code.slice(1, -1);
+          out += '<code class="md-code-inline" dir="ltr">' + esc(code) + '</code>';
+          i += cm[0].length; continue;
+        }
+      }
+
+      /* --- معادلة $...$ (تُعرض ككود مائل) --- */
+      if (c === '$' && src[i + 1] !== '$') {
+        var mm = /^\$([^\n$]+?)\$/.exec(src.slice(i));
+        if (mm) {
+          out += '<span class="md-math" dir="ltr">' + esc(mm[1]) + '</span>';
+          i += mm[0].length; continue;
+        }
+      }
+
+      /* --- صورة ![alt](src) --- */
+      if (c === '!' && src[i + 1] === '[') {
+        var ib = matchClose(src, i + 1, '[', ']');
+        if (ib !== -1 && src[ib + 1] === '(') {
+          var idest = parseLinkDest(src, ib + 1);
+          if (idest) {
+            var alt = src.slice(i + 2, ib);
+            out += '<img class="md-img" src="' + escAttr(safeUrl(idest.href)) + '" alt="' + escAttr(alt) + '"' +
+              (idest.title ? ' title="' + escAttr(idest.title) + '"' : '') + ' loading="lazy">';
+            i = idest.end + 1; continue;
+          }
+        }
+      }
+
+      /* --- حاشية سفلية [^1] --- */
+      if (c === '[' && src[i + 1] === '^') {
+        var fm = /^\[\^([^\]]+)\]/.exec(src.slice(i));
+        if (fm) {
+          var key = fm[1];
+          ctx.fnOrder = ctx.fnOrder || [];
+          var idx = ctx.fnOrder.indexOf(key);
+          if (idx === -1) { ctx.fnOrder.push(key); idx = ctx.fnOrder.length - 1; }
+          out += '<sup class="md-fnref"><a href="#fn-' + escAttr(slugify(key)) + '" id="fnref-' +
+            escAttr(slugify(key)) + '">[' + (idx + 1) + ']</a></sup>';
+          i += fm[0].length; continue;
+        }
+      }
+
+      /* --- رابط [نص](هدف)  أو  [نص][مرجع] --- */
+      if (c === '[') {
+        var b = matchClose(src, i, '[', ']');
+        if (b !== -1) {
+          var label = src.slice(i + 1, b);
+          if (src[b + 1] === '(') {
+            var dest = parseLinkDest(src, b + 1);
+            if (dest) {
+              out += '<a class="md-link" href="' + escAttr(safeUrl(dest.href)) + '"' +
+                (dest.title ? ' title="' + escAttr(dest.title) + '"' : '') + '>' +
+                inline(label, ctx) + '</a>';
+              i = dest.end + 1; continue;
+            }
+          }
+          var rm = /^\[([^\]]*)\]/.exec(src.slice(b + 1));
+          var refKey = rm ? (rm[1] || label) : label;
+          var ref = ctx.refs[refKey.toLowerCase()];
+          if (ref) {
+            out += '<a class="md-link" href="' + escAttr(safeUrl(ref.href)) + '"' +
+              (ref.title ? ' title="' + escAttr(ref.title) + '"' : '') + '>' + inline(label, ctx) + '</a>';
+            i = b + 1 + (rm ? rm[0].length : 0); continue;
+          }
+        }
+      }
+
+      /* --- رابط تلقائي <https://...> أو <mail@x.com> --- */
+      if (c === '<') {
+        var am = /^<((?:https?|ftp):\/\/[^>\s]+)>/.exec(src.slice(i));
+        if (am) {
+          out += '<a class="md-link" href="' + escAttr(safeUrl(am[1])) + '" dir="ltr">' + esc(am[1]) + '</a>';
+          i += am[0].length; continue;
+        }
+        var em = /^<([^\s@<>]+@[^\s@<>]+\.[^\s@<>]+)>/.exec(src.slice(i));
+        if (em) {
+          out += '<a class="md-link" href="mailto:' + escAttr(em[1]) + '" dir="ltr">' + esc(em[1]) + '</a>';
+          i += em[0].length; continue;
+        }
+        // وسوم HTML مسموح بها بشكل محدود
+        var hm = /^<\/?(b|i|u|em|strong|sub|sup|br|kbd|mark|small|span|del|ins|abbr|bdi|bdo|dir|ruby|rt)(\s[^<>]*)?\/?>/i.exec(src.slice(i));
+        if (hm) { out += hm[0]; i += hm[0].length; continue; }
+      }
+
+      /* --- رابط عاري https://... --- */
+      if ((c === 'h' || c === 'w') && /^(https?:\/\/|www\.)/.test(src.slice(i))) {
+        var bm = /^((?:https?:\/\/|www\.)[^\s<>()\[\]«»"']+)/.exec(src.slice(i));
+        if (bm) {
+          var url = bm[1].replace(/[.,;:!?]+$/, '');
+          var full = /^www\./.test(url) ? 'https://' + url : url;
+          out += '<a class="md-link" href="' + escAttr(safeUrl(full)) + '" dir="ltr">' + esc(url) + '</a>';
+          i += url.length; continue;
+        }
+      }
+
+      /* --- تشديد / مائل / شطب / تظليل --- */
+      var rest = src.slice(i);
+      var m;
+      if ((m = /^\*\*\*([\s\S]+?)\*\*\*/.exec(rest))) {
+        out += '<strong><em>' + inline(m[1], ctx) + '</em></strong>'; i += m[0].length; continue;
+      }
+      if ((m = /^\*\*([\s\S]+?)\*\*/.exec(rest))) {
+        out += '<strong>' + inline(m[1], ctx) + '</strong>'; i += m[0].length; continue;
+      }
+      if ((m = /^\*([^\s*][\s\S]*?)\*/.exec(rest))) {
+        out += '<em>' + inline(m[1], ctx) + '</em>'; i += m[0].length; continue;
+      }
+      if ((m = /^___([\s\S]+?)___/.exec(rest))) {
+        out += '<strong><em>' + inline(m[1], ctx) + '</em></strong>'; i += m[0].length; continue;
+      }
+      if ((m = /^__([\s\S]+?)__/.exec(rest))) {
+        out += '<strong>' + inline(m[1], ctx) + '</strong>'; i += m[0].length; continue;
+      }
+      if ((m = /^_([^\s_][\s\S]*?)_/.exec(rest)) && !/[\w؀-ۿ]/.test(src[i - 1] || '')) {
+        out += '<em>' + inline(m[1], ctx) + '</em>'; i += m[0].length; continue;
+      }
+      if ((m = /^~~([\s\S]+?)~~/.exec(rest))) {
+        out += '<del>' + inline(m[1], ctx) + '</del>'; i += m[0].length; continue;
+      }
+      if ((m = /^==([\s\S]+?)==/.exec(rest))) {
+        out += '<mark>' + inline(m[1], ctx) + '</mark>'; i += m[0].length; continue;
+      }
+
+      /* --- فاصل سطر --- */
+      if (c === '\n') { out += '<br>'; i++; continue; }
+
+      out += esc(c);
+      i++;
+    }
+
+    return out;
+  }
+
+  /* ------------------------------ كتل المستند ----------------------------- */
+
+  var BULLET = /^([ \t]*)([-*+])[ \t]+(.*)$/;
+  var ORDERED = /^([ \t]*)(\d{1,9})([.)])[ \t]+(.*)$/;
+
+  function indentOf(s) {
+    var n = 0;
+    for (var i = 0; i < s.length; i++) {
+      if (s[i] === ' ') n++;
+      else if (s[i] === '\t') n += 4;
+      else break;
+    }
+    return n;
+  }
+
+  function parseBlocks(lines, ctx) {
+    var html = '';
+    var i = 0;
+
+    function isBlank(l) { return l === undefined || /^[ \t]*$/.test(l); }
+
+    while (i < lines.length) {
+      var line = lines[i];
+
+      /* --- سطر فارغ --- */
+      if (isBlank(line)) { i++; continue; }
+
+      /* --- كتلة كود مسيّجة ``` أو ~~~ --- */
+      var fm = /^([ \t]*)(`{3,}|~{3,})[ \t]*([^\s`]*)[ \t]*(.*)$/.exec(line);
+      if (fm) {
+        var fence = fm[2][0], flen = fm[2].length, lang = (fm[3] || '').toLowerCase();
+        var buf = [], j = i + 1;
+        while (j < lines.length) {
+          var cl = new RegExp('^[ \\t]*' + (fence === '`' ? '`' : '~') + '{' + flen + ',}[ \\t]*$');
+          if (cl.test(lines[j])) break;
+          buf.push(lines[j]); j++;
+        }
+        var codeText = buf.join('\n');
+        html += '<div class="md-codeblock" data-lang="' + escAttr(lang) + '">' +
+          '<div class="md-codebar"><span class="md-lang">' + esc(lang || 'text') + '</span>' +
+          '<button class="md-copy" type="button" data-copy>نسخ</button></div>' +
+          '<pre dir="ltr"><code class="lang-' + escAttr(lang) + '">' +
+          highlight(codeText, lang) + '</code></pre></div>';
+        i = j + 1; continue;
+      }
+
+      /* --- تعريف مرجع رابط --- */
+      var dm = /^[ \t]{0,3}\[([^\]^]+)\]:[ \t]*(\S+)(?:[ \t]+["'(]([^"')]*)["')])?[ \t]*$/.exec(line);
+      if (dm) {
+        ctx.refs[dm[1].toLowerCase()] = { href: dm[2], title: dm[3] || '' };
+        i++; continue;
+      }
+
+      /* --- تعريف حاشية [^1]: نص --- */
+      var fdm = /^[ \t]{0,3}\[\^([^\]]+)\]:[ \t]*(.*)$/.exec(line);
+      if (fdm) {
+        var body = [fdm[2]];
+        var k = i + 1;
+        while (k < lines.length && (/^[ \t]{4,}/.test(lines[k]) || (!isBlank(lines[k]) && !/^\[\^/.test(lines[k]) && indentOf(lines[k]) > 0))) {
+          body.push(lines[k].replace(/^[ \t]{1,4}/, '')); k++;
+        }
+        ctx.footnotes[fdm[1]] = body.join('\n');
+        i = k; continue;
+      }
+
+      /* --- خط فاصل --- */
+      if (/^[ \t]{0,3}((\*[ \t]*){3,}|(-[ \t]*){3,}|(_[ \t]*){3,})$/.test(line)) {
+        html += '<hr class="md-hr">'; i++; continue;
+      }
+
+      /* --- عنوان ATX --- */
+      var hm = /^[ \t]{0,3}(#{1,6})[ \t]+(.*?)[ \t]*#*[ \t]*$/.exec(line);
+      if (hm) {
+        var lvl = hm[1].length;
+        var txt = hm[2];
+        var inner = inline(txt, ctx);
+        var id = slugify(txt, ctx.usedIds);
+        ctx.toc.push({ level: lvl, text: txt.replace(/[*_`~]/g, ''), id: id, dir: detectDir(txt) });
+        html += '<h' + lvl + ' id="' + escAttr(id) + '" class="md-h md-h' + lvl + '"' + dattr(txt) + '>' +
+          '<a class="md-anchor" href="#' + escAttr(id) + '" aria-hidden="true">#</a>' + inner + '</h' + lvl + '>';
+        i++; continue;
+      }
+
+      /* --- عنوان Setext --- */
+      if (!isBlank(lines[i + 1]) && /^[ \t]{0,3}(=+|-{2,})[ \t]*$/.test(lines[i + 1] || '') && !BULLET.test(line)) {
+        var slvl = /=/.test(lines[i + 1]) ? 1 : 2;
+        var sid = slugify(line, ctx.usedIds);
+        ctx.toc.push({ level: slvl, text: line.replace(/[*_`~]/g, '').trim(), id: sid, dir: detectDir(line) });
+        html += '<h' + slvl + ' id="' + escAttr(sid) + '" class="md-h md-h' + slvl + '"' + dattr(line) + '>' +
+          '<a class="md-anchor" href="#' + escAttr(sid) + '" aria-hidden="true">#</a>' +
+          inline(line.trim(), ctx) + '</h' + slvl + '>';
+        i += 2; continue;
+      }
+
+      /* --- اقتباس --- */
+      if (/^[ \t]{0,3}>/.test(line)) {
+        var qb = [], q = i;
+        while (q < lines.length && (/^[ \t]{0,3}>/.test(lines[q]) || (!isBlank(lines[q]) && qb.length))) {
+          qb.push(lines[q].replace(/^[ \t]{0,3}>[ ]?/, '')); q++;
+        }
+        var cls = 'md-quote';
+        var first = qb[0] || '';
+        var cm2 = /^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION|INFO|هام|تنبيه|ملاحظة)\]\s*(.*)$/i.exec(first);
+        var title = '';
+        if (cm2) {
+          cls += ' md-callout md-callout-' + cm2[1].toLowerCase();
+          title = cm2[1];
+          qb[0] = cm2[2] || '';
+        }
+        html += '<blockquote class="' + cls + '"' + dattr(qb.join(' ')) + '>' +
+          (title ? '<div class="md-callout-title"' + dattr(title) + '>' + esc(title) + '</div>' : '') +
+          parseBlocks(qb, ctx) + '</blockquote>';
+        i = q; continue;
+      }
+
+      /* --- جدول GFM --- */
+      if (line.indexOf('|') !== -1 && lines[i + 1] && /^[ \t]{0,3}\|?[ \t]*:?-{1,}:?[ \t]*(\|[ \t]*:?-{1,}:?[ \t]*)*\|?[ \t]*$/.test(lines[i + 1])) {
+        var splitRow = function (r) {
+          r = r.trim().replace(/^\|/, '').replace(/\|$/, '');
+          var cells = [], cur = '', inCode = false;
+          for (var x = 0; x < r.length; x++) {
+            var ch = r[x];
+            if (ch === '\\' && r[x + 1] === '|') { cur += '|'; x++; continue; }
+            if (ch === '`') inCode = !inCode;
+            if (ch === '|' && !inCode) { cells.push(cur); cur = ''; continue; }
+            cur += ch;
+          }
+          cells.push(cur);
+          return cells.map(function (s) { return s.trim(); });
+        };
+        var head = splitRow(line);
+        var aligns = splitRow(lines[i + 1]).map(function (s) {
+          if (/^:.*:$/.test(s)) return 'center';
+          if (/^:/.test(s)) return 'start';
+          if (/:$/.test(s)) return 'end';
+          return '';
+        });
+        var rows = [], r2 = i + 2;
+        while (r2 < lines.length && !isBlank(lines[r2]) && lines[r2].indexOf('|') !== -1) {
+          rows.push(splitRow(lines[r2])); r2++;
+        }
+        var t = '<div class="md-tablewrap"><table class="md-table"><thead><tr>';
+        head.forEach(function (h, ci) {
+          t += '<th' + dattr(h) + (aligns[ci] ? ' style="text-align:' + aligns[ci] + '"' : '') + '>' + inline(h, ctx) + '</th>';
+        });
+        t += '</tr></thead><tbody>';
+        rows.forEach(function (row) {
+          t += '<tr>';
+          for (var ci = 0; ci < head.length; ci++) {
+            var cell = row[ci] === undefined ? '' : row[ci];
+            t += '<td' + dattr(cell) + (aligns[ci] ? ' style="text-align:' + aligns[ci] + '"' : '') + '>' +
+              inline(cell, ctx) + '</td>';
+          }
+          t += '</tr>';
+        });
+        t += '</tbody></table></div>';
+        html += t; i = r2; continue;
+      }
+
+      /* --- قوائم --- */
+      if (BULLET.test(line) || ORDERED.test(line)) {
+        var res = parseList(lines, i, ctx);
+        html += res.html; i = res.next; continue;
+      }
+
+      /* --- كود بمسافات بادئة (4) --- */
+      if (/^(\t| {4})/.test(line) && !ctx.inListTight) {
+        var ib2 = [], p = i;
+        while (p < lines.length && (/^(\t| {4})/.test(lines[p]) || isBlank(lines[p]))) {
+          ib2.push(lines[p].replace(/^(\t| {4})/, '')); p++;
+        }
+        while (ib2.length && isBlank(ib2[ib2.length - 1])) ib2.pop();
+        html += '<div class="md-codeblock"><div class="md-codebar"><span class="md-lang">text</span>' +
+          '<button class="md-copy" type="button" data-copy>نسخ</button></div>' +
+          '<pre dir="ltr"><code>' + esc(ib2.join('\n')) + '</code></pre></div>';
+        i = p; continue;
+      }
+
+      /* --- HTML خام (كتلة) --- */
+      if (/^[ \t]{0,3}<(div|section|details|summary|table|figure|figcaption|p|center|iframe|video|audio|img|hr|br|dl|dt|dd)\b/i.test(line)) {
+        var hb = [], h2 = i;
+        while (h2 < lines.length && !isBlank(lines[h2])) { hb.push(lines[h2]); h2++; }
+        html += '<div class="md-rawhtml"' + dattr(hb.join(' ')) + '>' + hb.join('\n') + '</div>';
+        i = h2; continue;
+      }
+
+      /* --- فقرة --- */
+      var pb = [], pi = i;
+      while (pi < lines.length && !isBlank(lines[pi])
+        && !/^[ \t]{0,3}(#{1,6})[ \t]/.test(lines[pi])
+        && !/^[ \t]{0,3}>/.test(lines[pi])
+        && !/^([ \t]*)(`{3,}|~{3,})/.test(lines[pi])
+        && !(pi > i && (BULLET.test(lines[pi]) || ORDERED.test(lines[pi])))
+        && !/^[ \t]{0,3}((\*[ \t]*){3,}|(-[ \t]*){3,}|(_[ \t]*){3,})$/.test(lines[pi])) {
+        pb.push(lines[pi]); pi++;
+      }
+      if (!pb.length) { pb.push(lines[i]); pi = i + 1; }
+      var ptxt = pb.join('\n').replace(/[ ]{2,}\n/g, '\n');
+      html += '<p class="md-p"' + dattr(ptxt) + '>' + inline(ptxt.trim(), ctx) + '</p>';
+      i = pi;
+    }
+
+    return html;
+  }
+
+  function parseList(lines, start, ctx) {
+    var first = lines[start];
+    var om = ORDERED.exec(first);
+    var ordered = !!om;
+    var baseIndent = indentOf(first);
+    var startNum = ordered ? parseInt(om[2], 10) : 1;
+    var items = [];
+    var i = start;
+    var loose = false;
+
+    while (i < lines.length) {
+      var l = lines[i];
+      if (/^[ \t]*$/.test(l)) {
+        // سطر فارغ: نتحقق هل القائمة مستمرة
+        var k = i + 1;
+        while (k < lines.length && /^[ \t]*$/.test(lines[k])) k++;
+        if (k < lines.length && (indentOf(lines[k]) > baseIndent ||
+          ((BULLET.test(lines[k]) || ORDERED.test(lines[k])) && indentOf(lines[k]) >= baseIndent))) {
+          loose = true; i = k; continue;
+        }
+        break;
+      }
+      var bm2 = BULLET.exec(l), om2 = ORDERED.exec(l);
+      var ind = indentOf(l);
+
+      if ((bm2 || om2) && ind <= baseIndent + 1) {
+        if (ind < baseIndent) break;
+        var isOrd = !!om2;
+        if (isOrd !== ordered && items.length) break;
+        var content = isOrd ? om2[4] : bm2[3];
+        items.push([content]);
+        i++;
+        continue;
+      }
+      if (!items.length) break;
+      if (ind > baseIndent || /^[ \t]/.test(l)) {
+        items[items.length - 1].push(l.replace(new RegExp('^[ \\t]{0,' + (baseIndent + 2) + '}'), ''));
+        i++; continue;
+      }
+      // استمرار كسول للفقرة
+      items[items.length - 1].push(l);
+      i++;
+    }
+
+    var tag = ordered ? 'ol' : 'ul';
+    var out = '<' + tag + ' class="md-list' + (loose ? ' md-loose' : '') + '"' +
+      (ordered && startNum !== 1 ? ' start="' + startNum + '"' : '') + '>';
+    var hasTask = false;
+
+    items.forEach(function (itemLines) {
+      var body = itemLines.join('\n');
+      var task = /^\[([ xX])\]\s+([\s\S]*)$/.exec(body);
+      var checked = false, isTask = false;
+      if (task) {
+        isTask = true; hasTask = true;
+        checked = task[1].toLowerCase() === 'x';
+        body = task[2];
+      }
+      var sub = parseBlocks(body.split('\n'), ctx);
+      // في العناصر المضغوطة نشيل غلاف <p> الوحيد
+      if (!loose) {
+        var only = /^<p class="md-p"[^>]*>([\s\S]*?)<\/p>([\s\S]*)$/.exec(sub);
+        if (only && only[2].indexOf('<p ') === -1) sub = only[1] + only[2];
+      }
+      out += '<li class="md-li' + (isTask ? ' md-task' : '') + '"' + dattr(body) + '>' +
+        (isTask ? '<input type="checkbox" class="md-check" disabled' + (checked ? ' checked' : '') + '> ' : '') +
+        sub + '</li>';
+    });
+
+    out += '</' + tag + '>';
+    if (hasTask) out = out.replace('class="md-list', 'class="md-list md-tasklist');
+    return { html: out, next: i };
+  }
+
+  /* --------------------------- تلوين الكود البسيط -------------------------- */
+
+  var KEYWORDS = {
+    js: 'const let var function return if else for while class new this async await import export from default try catch finally throw typeof instanceof null undefined true false extends super yield of in delete void switch case break continue do static get set',
+    ts: 'const let var function return if else for while class new this async await import export from default try catch finally throw typeof instanceof null undefined true false interface type enum implements public private protected readonly extends super as satisfies',
+    py: 'def class return if elif else for while import from as try except finally raise with lambda None True False and or not in is pass break continue global nonlocal yield async await assert del',
+    sql: 'select from where insert update delete create table alter drop join left right inner outer on group by order having limit offset union all as and or not null primary key foreign references index values into set distinct case when then end',
+    sh: 'if then else fi for while do done case esac function return export local echo cd ls mkdir rm cp mv cat grep sed awk sudo apt npm node git',
+    json: 'true false null',
+    html: '', css: '', text: ''
+  };
+  var ALIAS = {
+    javascript: 'js', jsx: 'js', node: 'js', typescript: 'ts', tsx: 'ts',
+    python: 'py', bash: 'sh', shell: 'sh', zsh: 'sh', console: 'sh',
+    yml: 'yaml', md: 'text', markdown: 'text'
+  };
+
+  function highlight(code, lang) {
+    lang = ALIAS[lang] || lang;
+    var e = esc(code);
+    var kw = KEYWORDS[lang];
+
+    // تعليقات ونصوص أولًا عبر عناصر نائبة
+    // عناصر نائبة من منطقة الاستخدام الخاص حتى لا تلمسها قواعد التلوين
+    var store = [];
+    var ph = function (html) {
+      var id = String(store.push(html) - 1).split('').map(function (dg) {
+        return String.fromCharCode(0xE000 + (+dg));
+      }).join('');
+      return '\u0000' + id + '\u0000';
+    };
+
+    e = e.replace(/(&quot;[^&\n]*?&quot;|&#39;[^&\n]*?&#39;|`[^`\n]*?`|'[^'\n]*?'|"[^"\n]*?")/g, function (m) {
+      return ph('<span class="tok-str">' + m + '</span>');
+    });
+    e = e.replace(/(\/\/[^\n]*|#[^\n]*|--[^\n]*)/g, function (m, g, off, s) {
+      if (/^#[0-9a-fA-F]{3,8}\b/.test(m)) return m;
+      return ph('<span class="tok-cmt">' + m + '</span>');
+    });
+    e = e.replace(/\/\*[\s\S]*?\*\//g, function (m) { return ph('<span class="tok-cmt">' + m + '</span>'); });
+
+    if (kw) {
+      var re = new RegExp('\\b(' + kw.trim().split(/\s+/).join('|') + ')\\b', 'g');
+      e = e.replace(re, '<span class="tok-kw">$1</span>');
+    }
+    e = e.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-num">$1</span>');
+    e = e.replace(/([A-Za-z_$][\w$]*)\s*\(/g, '<span class="tok-fn">$1</span>(');
+
+    e = e.replace(/\u0000([\uE000-\uE009]+)\u0000/g, function (_, k) {
+      var idx = k.split('').map(function (ch) { return ch.charCodeAt(0) - 0xE000; }).join('');
+      return store[+idx];
+    });
+    return e;
+  }
+
+  /* ------------------------------- الواجهة -------------------------------- */
+
+  function render(src, opts) {
+    opts = opts || {};
+    DIRMODE = (['smart', 'rtl', 'ltr', 'auto'].indexOf(opts.dir) !== -1) ? opts.dir : 'smart';
+    src = String(src == null ? '' : src).replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ');
+
+    var ctx = {
+      refs: {}, footnotes: {}, toc: [], usedIds: {}, fnOrder: []
+    };
+
+    var frontMatter = null;
+    var fmm = /^---\n([\s\S]*?)\n---\n?/.exec(src);
+    if (fmm) { frontMatter = fmm[1]; src = src.slice(fmm[0].length); }
+
+    var lines = src.split('\n');
+    var html = parseBlocks(lines, ctx);
+
+    // الحواشي
+    if (ctx.fnOrder.length) {
+      var f = '<section class="md-footnotes"><hr class="md-hr"><ol>';
+      ctx.fnOrder.forEach(function (key) {
+        var txt = ctx.footnotes[key] || '';
+        f += '<li id="fn-' + escAttr(slugify(key)) + '"' + dattr(txt) + '>' + inline(txt, ctx) +
+          ' <a class="md-fnback" href="#fnref-' + escAttr(slugify(key)) + '">↩</a></li>';
+      });
+      f += '</ol></section>';
+      html += f;
+    }
+
+    var fmHtml = '';
+    if (frontMatter && opts.showFrontMatter !== false) {
+      fmHtml = '<div class="md-frontmatter" dir="auto"><pre dir="ltr">' + esc(frontMatter) + '</pre></div>';
+    }
+
+    return { html: fmHtml + html, toc: ctx.toc, frontMatter: frontMatter, docDir: detectDir(src.slice(0, 8000)) };
+  }
+
+  global.MDX = { render: render, slugify: slugify, escape: esc, detectDir: detectDir, dirAttr: dattr };
+
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/* ==========================================================================
+   MDX Reader — منطق التطبيق
+   يعمل داخل Electron (مع فتح/حفظ حقيقي) أو داخل أي متصفح (وضع احتياطي)
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var HAS_NATIVE = typeof window.mdxNative !== 'undefined';
+  var N = window.mdxNative || null;
+
+  /* ------------------------------ الترجمات ------------------------------- */
+  var I18N = {
+    ar: {
+      open: 'فتح', save: 'حفظ', saveAs: 'حفظ باسم',
+      viewPreview: 'معاينة', viewSplit: 'مقسوم', viewEditor: 'تحرير',
+      toc: 'الفهرس', outline: 'محتويات المستند',
+      searchPh: 'بحث في المستند…',
+      dirSmart: '🧠 ذكي — عربي = RTL', dirRtl: '→ فرض من اليمين لليسار',
+      dirLtr: '← فرض من اليسار لليمين', dirAuto: '↔ حسب أول حرف',
+      thDark: '🌙 داكن', thMid: '🌌 ليلي', thLight: '☀️ فاتح', thSepia: '📜 سيبيا',
+      noFile: 'لا يوجد ملف مفتوح',
+      words: 'كلمات', chars: 'حروف', lines: 'أسطر', readTime: 'وقت القراءة',
+      minute: 'د',
+      welcomeTitle: 'عارض ومحرر Markdown بدعم عربي كامل',
+      welcomeText: 'افتح ملف <b>.md</b> أو اسحبه وأفلته هنا. النص العربي والإنجليزي المختلط يُعرض بشكل صحيح تلقائيًا.',
+      editorPh: 'اكتب هنا بالعربي أو English بحرية…',
+      dropHere: 'أفلت ملف .md هنا',
+      settings: 'الإعدادات', settingsSub: 'كل الإعدادات تُحفظ تلقائيًا',
+      fontFamily: 'خط العرض', fontFamilyHint: 'اختر خطًا مثبتًا على جهازك',
+      fontSize: 'حجم الخط', lineHeight: 'تباعد الأسطر', contentWidth: 'عرض النص',
+      syncScroll: 'تزامن التمرير في الوضع المقسوم',
+      autoSave: 'حفظ تلقائي', autoSaveHint: 'يحفظ الملف بعد ثانيتين من آخر تعديل',
+      exportHtml: 'تصدير HTML', reset: 'استعادة الافتراضي', done: 'تم',
+      saved: 'تم الحفظ ✓', copied: 'تم النسخ ✓', copyBtn: 'نسخ',
+      noResults: 'لا نتائج', of: 'من',
+      errOpen: 'تعذّر فتح الملف', errSave: 'تعذّر الحفظ',
+      unsaved: 'يوجد تعديلات غير محفوظة. هل تريد المتابعة؟',
+      exported: 'تم التصدير ✓', untitled: 'مستند-جديد'
+    },
+    en: {
+      open: 'Open', save: 'Save', saveAs: 'Save As',
+      viewPreview: 'Preview', viewSplit: 'Split', viewEditor: 'Edit',
+      toc: 'Outline', outline: 'Table of contents',
+      searchPh: 'Search document…',
+      dirSmart: '🧠 Smart — Arabic = RTL', dirRtl: '→ Force right to left',
+      dirLtr: '← Force left to right', dirAuto: '↔ By first character',
+      thDark: '🌙 Dark', thMid: '🌌 Midnight', thLight: '☀️ Light', thSepia: '📜 Sepia',
+      noFile: 'No file open',
+      words: 'Words', chars: 'Chars', lines: 'Lines', readTime: 'Read time',
+      minute: 'm',
+      welcomeTitle: 'Markdown viewer & editor with full Arabic support',
+      welcomeText: 'Open a <b>.md</b> file or drop it here. Mixed Arabic/English renders correctly, automatically.',
+      editorPh: 'Type here in English or بالعربي…',
+      dropHere: 'Drop a .md file here',
+      settings: 'Settings', settingsSub: 'Everything is saved automatically',
+      fontFamily: 'Display font', fontFamilyHint: 'Pick a font installed on your machine',
+      fontSize: 'Font size', lineHeight: 'Line height', contentWidth: 'Content width',
+      syncScroll: 'Sync scrolling in split view',
+      autoSave: 'Auto-save', autoSaveHint: 'Saves 2 seconds after the last edit',
+      exportHtml: 'Export HTML', reset: 'Reset to defaults', done: 'Done',
+      saved: 'Saved ✓', copied: 'Copied ✓', copyBtn: 'Copy',
+      noResults: 'No results', of: 'of',
+      errOpen: 'Could not open file', errSave: 'Could not save',
+      unsaved: 'You have unsaved changes. Continue?',
+      exported: 'Exported ✓', untitled: 'untitled'
+    }
+  };
+
+  /* ------------------------------ الحالة --------------------------------- */
+  var DEFAULTS = {
+    uiLang: 'ar', theme: 'dark', dir: 'smart', view: 'preview', toc: true,
+    fontFamily: '"Segoe UI","IBM Plex Sans Arabic","Noto Sans Arabic",Tahoma,sans-serif',
+    fontSize: 17, lineHeight: 2, contentWidth: 900,
+    syncScroll: true, autoSave: false
+  };
+  var S = load();
+  var state = {
+    path: null, name: null, text: '', dirty: false, pendingClose: false,
+    fileHandle: null, hits: [], hitIndex: -1, lastRenderedText: null
+  };
+
+  var SETTINGS_VERSION = 2;
+
+  function load() {
+    try {
+      var raw = localStorage.getItem('mdx.settings');
+      var s = Object.assign({}, DEFAULTS, raw ? JSON.parse(raw) : {});
+      // ترقية: الوضع القديم "auto" كان بيعتمد على أول حرف ويكسر الأسطر المختلطة
+      if ((s._v || 1) < 2) {
+        if (s.dir === 'auto') s.dir = 'smart';
+        s._v = SETTINGS_VERSION;
+      }
+      return s;
+    } catch (e) { return Object.assign({}, DEFAULTS, { _v: SETTINGS_VERSION }); }
+  }
+  function save() {
+    try { localStorage.setItem('mdx.settings', JSON.stringify(S)); } catch (e) {}
+  }
+  function t(key) { return (I18N[S.uiLang] || I18N.ar)[key] || key; }
+
+  /* ------------------------------ اختصارات ------------------------------- */
+  var $ = function (id) { return document.getElementById(id); };
+  var el = {
+    app: $('app'), main: $('main'), toc: $('toc'), tocList: $('tocList'),
+    editor: $('editor'), preview: $('preview'), welcome: $('welcome'),
+    paneEditor: $('paneEditor'), panePreview: $('panePreview'), panes: $('panes'),
+    fileName: $('fileName'), filePath: $('filePath'), pathbar: $('pathbar'),
+    search: $('search'), searchCount: $('searchCount'),
+    toast: $('toast'), dropzone: $('dropzone'),
+    settingsBack: $('settingsBack'), filePicker: $('filePicker'),
+    stWords: $('stWords'), stChars: $('stChars'), stLines: $('stLines'),
+    stRead: $('stRead'), stMode: $('stMode'), stSaved: $('stSaved')
+  };
+
+  /* ============================= تطبيق الإعدادات ========================== */
+
+  function applyUiLang() {
+    var lang = S.uiLang;
+    document.documentElement.lang = lang;
+    // اتجاه الواجهة يتبع لغة الواجهة
+    document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+
+    document.querySelectorAll('[data-i18n]').forEach(function (n) {
+      var k = n.getAttribute('data-i18n');
+      var v = (I18N[lang] || {})[k];
+      if (v !== undefined) n.innerHTML = v;
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function (n) {
+      var k = n.getAttribute('data-i18n-ph');
+      var v = (I18N[lang] || {})[k];
+      if (v !== undefined) n.setAttribute('placeholder', v);
+    });
+    if (!state.path) el.fileName.textContent = t('noFile');
+    $('uiLang').value = lang;
+    updateStats();
+  }
+
+  function applyDir() {
+    // اتجاه محتوى المستند (مستقل تمامًا عن لغة الواجهة)
+    var d = S.dir;
+    if (d === 'smart' || d === 'auto') {
+      var det = state.docDir || window.MDX.detectDir(state.text.slice(0, 8000));
+      d = (det === 'auto') ? 'rtl' : det;
+    }
+    el.preview.setAttribute('dir', d);
+    el.editor.setAttribute('dir', S.dir === 'auto' ? 'auto' : d);
+    el.tocList.setAttribute('dir', d);
+    $('dirSel').value = S.dir;
+  }
+
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', S.theme);
+    $('themeSel').value = S.theme;
+  }
+
+  function applyTypography() {
+    var r = document.documentElement.style;
+    r.setProperty('--ar-font', S.fontFamily);
+    r.setProperty('--body-size', S.fontSize + 'px');
+    r.setProperty('--line-height', String(S.lineHeight));
+    r.setProperty('--content-width', S.contentWidth + 'px');
+    $('fontSel').value = S.fontFamily;
+    $('fontSize').value = S.fontSize; $('fsVal').textContent = S.fontSize;
+    $('lineHeight').value = S.lineHeight; $('lhVal').textContent = Number(S.lineHeight).toFixed(1);
+    $('contentWidth').value = S.contentWidth; $('cwVal').textContent = S.contentWidth;
+    $('syncScroll').checked = !!S.syncScroll;
+    $('autoSave').checked = !!S.autoSave;
+  }
+
+  function applyView() {
+    el.panes.classList.remove('split-only-preview', 'split-only-editor');
+    if (S.view === 'preview') el.panes.classList.add('split-only-preview');
+    else if (S.view === 'editor') el.panes.classList.add('split-only-editor');
+    document.querySelectorAll('#viewSeg .btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.view === S.view);
+    });
+    el.stMode.textContent = t('view' + S.view.charAt(0).toUpperCase() + S.view.slice(1));
+  }
+
+  function applyToc() {
+    el.main.classList.toggle('toc-hidden', !S.toc);
+    $('btnToc').classList.toggle('active', !!S.toc);
+  }
+
+  function applyAll() {
+    applyUiLang(); applyTheme(); applyTypography(); applyView(); applyToc(); applyDir();
+  }
+
+  /* ================================ العرض ================================ */
+
+  var renderTimer = null;
+  function scheduleRender() {
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(render, 120);
+  }
+
+  function render() {
+    var src = state.text;
+    if (!src.trim()) {
+      el.preview.innerHTML = '';
+      el.preview.appendChild(el.welcome);
+      el.welcome.style.display = '';
+      el.tocList.innerHTML = '';
+      updateStats();
+      return;
+    }
+    var res = window.MDX.render(src, { dir: S.dir });
+    el.preview.innerHTML = res.html;
+    state.docDir = res.docDir;
+    buildToc(res.toc);
+    applyDir();
+    wireCodeCopy();
+    wireLinks();
+    updateStats();
+    if (el.search.value) runSearch(el.search.value, false);
+  }
+
+  function buildToc(toc) {
+    if (!toc || !toc.length) {
+      el.tocList.innerHTML = '<div style="padding:8px 10px;color:var(--fg-3);font-size:12.5px">—</div>';
+      return;
+    }
+    var html = '';
+    toc.forEach(function (h) {
+      var hd = (S.dir === 'rtl' || S.dir === 'ltr') ? S.dir : (h.dir || 'auto');
+      html += '<a class="lvl-' + h.level + '" href="#' + h.id + '" data-id="' + h.id + '" dir="' + hd + '" title="' +
+        window.MDX.escape(h.text) + '">' + window.MDX.escape(h.text) + '</a>';
+    });
+    el.tocList.innerHTML = html;
+    el.tocList.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        var target = document.getElementById(a.dataset.id);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  function wireCodeCopy() {
+    el.preview.querySelectorAll('[data-copy]').forEach(function (b) {
+      b.textContent = t('copyBtn');
+      b.addEventListener('click', function () {
+        var code = b.closest('.md-codeblock').querySelector('code');
+        var txt = code ? code.innerText : '';
+        navigator.clipboard.writeText(txt).then(function () { toast(t('copied')); });
+      });
+    });
+  }
+
+  function wireLinks() {
+    el.preview.querySelectorAll('a[href]').forEach(function (a) {
+      var href = a.getAttribute('href') || '';
+      if (href.charAt(0) === '#') {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          var target = document.getElementById(href.slice(1));
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      } else if (/^(https?|mailto):/i.test(href)) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          if (HAS_NATIVE) N.openExternal(href);
+          else window.open(href, '_blank', 'noopener');
+        });
+      }
+    });
+  }
+
+  /* ------------------------------ الإحصائيات ----------------------------- */
+  function updateStats() {
+    var txt = state.text;
+    var words = (txt.match(/[؀-ۿ\w'’]+/g) || []).length;
+    el.stWords.textContent = words.toLocaleString(S.uiLang === 'ar' ? 'ar-EG' : 'en-US');
+    el.stChars.textContent = txt.length.toLocaleString(S.uiLang === 'ar' ? 'ar-EG' : 'en-US');
+    el.stLines.textContent = (txt ? txt.split('\n').length : 0).toLocaleString(S.uiLang === 'ar' ? 'ar-EG' : 'en-US');
+    el.stRead.textContent = Math.max(1, Math.round(words / 200)) + ' ' + t('minute');
+  }
+
+  /* -------------------------- تتبّع العنوان النشط ------------------------ */
+  function setupScrollSpy() {
+    el.panePreview.addEventListener('scroll', function () {
+      var heads = el.preview.querySelectorAll('.md-h');
+      var top = el.panePreview.getBoundingClientRect().top;
+      var active = null;
+      for (var i = 0; i < heads.length; i++) {
+        if (heads[i].getBoundingClientRect().top - top < 90) active = heads[i];
+        else break;
+      }
+      el.tocList.querySelectorAll('a').forEach(function (a) {
+        a.classList.toggle('active', active && a.dataset.id === active.id);
+      });
+      if (active) {
+        var cur = el.tocList.querySelector('a.active');
+        if (cur && cur.scrollIntoViewIfNeeded) cur.scrollIntoViewIfNeeded(false);
+      }
+      syncFrom('preview');
+    }, { passive: true });
+
+    el.paneEditor.addEventListener('scroll', function () { syncFrom('editor'); }, { passive: true });
+  }
+
+  var syncing = false;
+  function syncFrom(who) {
+    if (!S.syncScroll || S.view !== 'split' || syncing) return;
+    syncing = true;
+    var a = who === 'editor' ? el.paneEditor : el.panePreview;
+    var b = who === 'editor' ? el.panePreview : el.paneEditor;
+    var ratio = a.scrollTop / Math.max(1, a.scrollHeight - a.clientHeight);
+    b.scrollTop = ratio * Math.max(0, b.scrollHeight - b.clientHeight);
+    requestAnimationFrame(function () { syncing = false; });
+  }
+
+  /* ================================ البحث ================================ */
+
+  function clearSearch() {
+    el.preview.querySelectorAll('.search-hit').forEach(function (n) {
+      var p = n.parentNode;
+      p.replaceChild(document.createTextNode(n.textContent), n);
+      p.normalize();
+    });
+    state.hits = []; state.hitIndex = -1;
+    el.searchCount.textContent = '';
+  }
+
+  function runSearch(q, jump) {
+    clearSearch();
+    q = (q || '').trim();
+    if (q.length < 1) return;
+
+    var walker = document.createTreeWalker(el.preview, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) {
+        if (!n.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        if (n.parentElement.closest('.md-codebar, script, style')) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    var nodes = [], n;
+    while ((n = walker.nextNode())) nodes.push(n);
+
+    var needle = norm(q);
+    nodes.forEach(function (node) {
+      var hay = norm(node.nodeValue);
+      var idx = hay.indexOf(needle), from = 0;
+      if (idx === -1) return;
+      var frag = document.createDocumentFragment();
+      var text = node.nodeValue;
+      while (idx !== -1) {
+        frag.appendChild(document.createTextNode(text.slice(from, idx)));
+        var mk = document.createElement('span');
+        mk.className = 'search-hit';
+        mk.textContent = text.slice(idx, idx + q.length);
+        frag.appendChild(mk);
+        from = idx + q.length;
+        idx = hay.indexOf(needle, from);
+      }
+      frag.appendChild(document.createTextNode(text.slice(from)));
+      node.parentNode.replaceChild(frag, node);
+    });
+
+    state.hits = Array.prototype.slice.call(el.preview.querySelectorAll('.search-hit'));
+    if (!state.hits.length) { el.searchCount.textContent = t('noResults'); return; }
+    state.hitIndex = 0;
+    if (jump !== false) focusHit(0); else updateHitLabel();
+  }
+
+  // تطبيع عربي: يتجاهل التشكيل والهمزات وشكل الألف والتاء المربوطة
+  function norm(s) {
+    return s
+      .replace(/[ً-ْٰـ]/g, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .replace(/[ؤ]/g, 'و')
+      .replace(/[ئ]/g, 'ي')
+      .toLowerCase();
+  }
+
+  function updateHitLabel() {
+    el.searchCount.textContent = (state.hitIndex + 1) + ' ' + t('of') + ' ' + state.hits.length;
+  }
+
+  function focusHit(i) {
+    if (!state.hits.length) return;
+    state.hits.forEach(function (h) { h.classList.remove('current'); });
+    state.hitIndex = ((i % state.hits.length) + state.hits.length) % state.hits.length;
+    var h = state.hits[state.hitIndex];
+    h.classList.add('current');
+    h.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    updateHitLabel();
+  }
+
+  /* =============================== الملفات =============================== */
+
+  function setDoc(text, path, name) {
+    state.text = text;
+    state.path = path || null;
+    state.name = name || (path ? path.split(/[\\/]/).pop() : null);
+    el.editor.value = text;
+    el.fileName.textContent = state.name || t('noFile');
+    el.filePath.textContent = path || '';
+    setDirty(false);
+    el.welcome.style.display = 'none';
+    if (HAS_NATIVE && state.name) N.setTitle(state.name);
+    render();
+    el.panePreview.scrollTop = 0;
+    el.paneEditor.scrollTop = 0;
+  }
+
+  function setDirty(v) {
+    state.dirty = v;
+    el.pathbar.classList.toggle('is-dirty', v);
+    if (HAS_NATIVE) N.setDirty(v);
+  }
+
+  function markDirty() {
+    setDirty(true);
+    el.stSaved.textContent = '';
+    if (S.autoSave && state.path) scheduleAutoSave();
+  }
+
+  var autoSaveTimer = null;
+  function scheduleAutoSave() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(function () { doSave(true); }, 2000);
+  }
+
+  async function doOpen() {
+    if (state.dirty && !confirm(t('unsaved'))) return;
+    if (HAS_NATIVE) {
+      var r = await N.openFile();
+      if (r && r.ok) setDoc(r.content, r.path);
+      else if (r && r.error) toast(t('errOpen'));
+      return;
+    }
+    if (window.showOpenFilePicker) {
+      try {
+        var [h] = await window.showOpenFilePicker({
+          types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md', '.markdown', '.mdown', '.mkd', '.mdx', '.txt'] } }]
+        });
+        var f = await h.getFile();
+        state.fileHandle = h;
+        setDoc(await f.text(), f.name, f.name);
+      } catch (e) { /* ألغى المستخدم */ }
+      return;
+    }
+    el.filePicker.click();
+  }
+
+  async function doSave(silent) {
+    if (!state.path && !state.fileHandle) return doSaveAs();
+    if (HAS_NATIVE) {
+      var r = await N.saveFile(state.path, state.text);
+      if (r && r.ok) afterSave(silent);
+      else { state.pendingClose = false; toast(t('errSave')); }
+      return;
+    }
+    if (state.fileHandle) {
+      try {
+        var w = await state.fileHandle.createWritable();
+        await w.write(state.text); await w.close();
+        afterSave(silent);
+      } catch (e) { state.pendingClose = false; toast(t('errSave')); }
+      return;
+    }
+    doSaveAs();
+  }
+
+  async function doSaveAs() {
+    var suggested = state.name || (t('untitled') + '.md');
+    if (HAS_NATIVE) {
+      var r = await N.saveFileAs(suggested, state.text);
+      if (r && r.ok) {
+        state.path = r.path; state.name = r.path.split(/[\\/]/).pop();
+        el.fileName.textContent = state.name; el.filePath.textContent = r.path;
+        N.setTitle(state.name); afterSave();
+      } else {
+        state.pendingClose = false;   // ألغى الحفظ ⇒ ألغِ الإغلاق كمان
+      }
+      return;
+    }
+    if (window.showSaveFilePicker) {
+      try {
+        var h = await window.showSaveFilePicker({
+          suggestedName: suggested,
+          types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md'] } }]
+        });
+        state.fileHandle = h; state.name = h.name;
+        el.fileName.textContent = h.name;
+        var w = await h.createWritable(); await w.write(state.text); await w.close();
+        afterSave();
+      } catch (e) {}
+      return;
+    }
+    download(suggested, state.text, 'text/markdown;charset=utf-8');
+    afterSave();
+  }
+
+  function afterSave(silent) {
+    setDirty(false);
+    el.stSaved.textContent = t('saved');
+    el.stSaved.className = 'sb-item ok';
+    if (!silent) toast(t('saved'));
+    setTimeout(function () { el.stSaved.textContent = ''; }, 4000);
+    // لو الحفظ كان جزء من "احفظ ثم اغلق"
+    if (state.pendingClose && HAS_NATIVE) {
+      state.pendingClose = false;
+      N.closeNow();
+    }
+  }
+
+  function download(name, content, mime) {
+    var blob = new Blob([content], { type: mime });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+  }
+
+  /* --------------------------- تصدير HTML مستقل -------------------------- */
+  async function exportHtml() {
+    var res = window.MDX.render(state.text);
+    var css = '';
+    // نسخة مستقلة: التنسيقات مضمّنة داخل <style>
+    document.querySelectorAll('style').forEach(function (s) { css += s.textContent + '\n'; });
+    if (!css.trim()) {
+      try {
+        var links = document.querySelectorAll('link[rel=stylesheet]');
+        for (var i = 0; i < links.length; i++) {
+          var r = await fetch(links[i].href); css += await r.text();
+        }
+      } catch (e) {}
+    }
+    if (!css.trim()) {
+      // ملاذ أخير: اقرأ القواعد من ورقة الأنماط المُحمّلة
+      try {
+        for (var j = 0; j < document.styleSheets.length; j++) {
+          var rules = document.styleSheets[j].cssRules || [];
+          for (var k = 0; k < rules.length; k++) css += rules[k].cssText + '\n';
+        }
+      } catch (e) {}
+    }
+    var dir = el.preview.getAttribute('dir') || 'rtl';
+    var doc = '<!DOCTYPE html>\n<html lang="ar" dir="' + dir + '" data-theme="' + S.theme + '">\n<head>\n' +
+      '<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
+      '<title>' + window.MDX.escape(state.name || 'document') + '</title>\n<style>\n' + css +
+      '\nhtml,body{overflow:auto;height:auto}\n' +
+      'body{--ar-font:' + S.fontFamily + ';--body-size:' + S.fontSize + 'px;--line-height:' + S.lineHeight +
+      ';--content-width:' + S.contentWidth + 'px;padding:0;background:var(--bg);color:var(--fg)}\n' +
+      '</style>\n</head>\n<body>\n<div class="md-body" dir="' + dir + '">\n' + res.html + '\n</div>\n</body>\n</html>';
+
+    var name = (state.name || 'document').replace(/\.[^.]+$/, '') + '.html';
+    if (HAS_NATIVE) {
+      var r2 = await N.saveFileAs(name, doc);
+      if (r2 && r2.ok) toast(t('exported'));
+    } else {
+      download(name, doc, 'text/html;charset=utf-8');
+      toast(t('exported'));
+    }
+  }
+
+  /* ============================ مساعدات المحرر =========================== */
+  function wrapSelection(before, after, placeholder) {
+    var ta = el.editor;
+    var s = ta.selectionStart, e = ta.selectionEnd;
+    var sel = ta.value.slice(s, e) || (placeholder || '');
+    var v = ta.value.slice(0, s) + before + sel + after + ta.value.slice(e);
+    ta.value = v;
+    ta.focus();
+    ta.selectionStart = s + before.length;
+    ta.selectionEnd = s + before.length + sel.length;
+    state.text = v; markDirty(); scheduleRender();
+  }
+
+  /* ============================== الأحداث ================================ */
+
+  function toast(msg) {
+    el.toast.textContent = msg;
+    el.toast.classList.add('show');
+    clearTimeout(el.toast._t);
+    el.toast._t = setTimeout(function () { el.toast.classList.remove('show'); }, 1800);
+  }
+
+  function bind() {
+    $('btnOpen').addEventListener('click', doOpen);
+    $('btnSave').addEventListener('click', function () { doSave(); });
+    $('btnSaveAs').addEventListener('click', doSaveAs);
+    $('btnPrint').addEventListener('click', function () { window.print(); });
+    $('btnExportHtml').addEventListener('click', exportHtml);
+
+    $('btnToc').addEventListener('click', function () { S.toc = !S.toc; save(); applyToc(); });
+
+    document.querySelectorAll('#viewSeg .btn').forEach(function (b) {
+      b.addEventListener('click', function () { S.view = b.dataset.view; save(); applyView(); });
+    });
+
+    $('uiLang').addEventListener('change', function (e) {
+      S.uiLang = e.target.value; save(); applyUiLang(); wireCodeCopy(); applyView();
+    });
+    $('dirSel').addEventListener('change', function (e) { S.dir = e.target.value; save(); render(); });
+    $('themeSel').addEventListener('change', function (e) { S.theme = e.target.value; save(); applyTheme(); });
+
+    // الإعدادات
+    $('btnSettings').addEventListener('click', function () { el.settingsBack.classList.add('show'); });
+    $('btnCloseSettings').addEventListener('click', function () { el.settingsBack.classList.remove('show'); });
+    el.settingsBack.addEventListener('click', function (e) {
+      if (e.target === el.settingsBack) el.settingsBack.classList.remove('show');
+    });
+    $('fontSel').addEventListener('change', function (e) { S.fontFamily = e.target.value; save(); applyTypography(); });
+    $('fontSize').addEventListener('input', function (e) { S.fontSize = +e.target.value; save(); applyTypography(); });
+    $('lineHeight').addEventListener('input', function (e) { S.lineHeight = +e.target.value; save(); applyTypography(); });
+    $('contentWidth').addEventListener('input', function (e) { S.contentWidth = +e.target.value; save(); applyTypography(); });
+    $('syncScroll').addEventListener('change', function (e) { S.syncScroll = e.target.checked; save(); });
+    $('autoSave').addEventListener('change', function (e) { S.autoSave = e.target.checked; save(); });
+    $('btnResetSettings').addEventListener('click', function () {
+      S = Object.assign({}, DEFAULTS); save(); applyAll(); render();
+    });
+
+    // المحرر
+    el.editor.addEventListener('input', function () {
+      state.text = el.editor.value; markDirty(); scheduleRender();
+    });
+    el.editor.addEventListener('keydown', function (e) {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        var s = el.editor.selectionStart;
+        el.editor.setRangeText('  ', s, el.editor.selectionEnd, 'end');
+        state.text = el.editor.value; markDirty(); scheduleRender();
+      }
+    });
+
+    // البحث
+    var searchTimer = null;
+    el.search.addEventListener('input', function (e) {
+      clearTimeout(searchTimer);
+      var v = e.target.value;
+      searchTimer = setTimeout(function () { runSearch(v); }, 220);
+    });
+    el.search.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); focusHit(state.hitIndex + (e.shiftKey ? -1 : 1)); }
+      if (e.key === 'Escape') { el.search.value = ''; clearSearch(); el.search.blur(); }
+    });
+    $('btnNext').addEventListener('click', function () { focusHit(state.hitIndex + 1); });
+    $('btnPrev').addEventListener('click', function () { focusHit(state.hitIndex - 1); });
+
+    // اختيار ملف احتياطي
+    el.filePicker.addEventListener('change', function (e) {
+      var f = e.target.files[0];
+      if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () { setDoc(String(rd.result), null, f.name); };
+      rd.readAsText(f, 'utf-8');
+      e.target.value = '';
+    });
+
+    // السحب والإفلات
+    var dragDepth = 0;
+    window.addEventListener('dragenter', function (e) {
+      e.preventDefault(); dragDepth++; document.body.classList.add('dragging');
+    });
+    window.addEventListener('dragover', function (e) { e.preventDefault(); });
+    window.addEventListener('dragleave', function (e) {
+      e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); }
+    });
+    window.addEventListener('drop', function (e) {
+      e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging');
+      var f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (!f) return;
+      if (HAS_NATIVE && f.path) {
+        N.readPath(f.path).then(function (r) { if (r.ok) setDoc(r.content, r.path); });
+        return;
+      }
+      var rd = new FileReader();
+      rd.onload = function () { setDoc(String(rd.result), null, f.name); };
+      rd.readAsText(f, 'utf-8');
+    });
+
+    // اختصارات لوحة المفاتيح
+    window.addEventListener('keydown', function (e) {
+      var ctrl = e.ctrlKey || e.metaKey;
+      if (!ctrl) return;
+      var k = e.key.toLowerCase();
+      if (k === 'o') { e.preventDefault(); doOpen(); }
+      else if (k === 's') { e.preventDefault(); e.shiftKey ? doSaveAs() : doSave(); }
+      else if (k === 'f') { e.preventDefault(); el.search.focus(); el.search.select(); }
+      else if (k === 'e') { e.preventDefault(); S.view = (S.view === 'editor' ? 'preview' : 'editor'); save(); applyView(); }
+      else if (k === '1') { e.preventDefault(); S.view = 'preview'; save(); applyView(); }
+      else if (k === '2') { e.preventDefault(); S.view = 'split'; save(); applyView(); }
+      else if (k === '3') { e.preventDefault(); S.view = 'editor'; save(); applyView(); }
+      else if (k === '\\') { e.preventDefault(); S.toc = !S.toc; save(); applyToc(); }
+      else if (k === ',') { e.preventDefault(); el.settingsBack.classList.toggle('show'); }
+      else if (k === '=' || k === '+') { e.preventDefault(); S.fontSize = Math.min(30, S.fontSize + 1); save(); applyTypography(); }
+      else if (k === '-') { e.preventDefault(); S.fontSize = Math.max(12, S.fontSize - 1); save(); applyTypography(); }
+      else if (k === '0') { e.preventDefault(); S.fontSize = DEFAULTS.fontSize; save(); applyTypography(); }
+      else if (document.activeElement === el.editor) {
+        if (k === 'b') { e.preventDefault(); wrapSelection('**', '**', 'نص'); }
+        else if (k === 'i') { e.preventDefault(); wrapSelection('*', '*', 'نص'); }
+        else if (k === 'k') { e.preventDefault(); wrapSelection('[', '](https://)', 'رابط'); }
+      }
+    });
+
+    // في المتصفح فقط: تحذير المتصفح عند الخروج.
+    // في Electron ممنوع — لأنه بيلغي الإغلاق بصمت والنافذة ما بتقفلش.
+    // بديله رسالة ويندوز الحقيقية من main.js
+    if (!HAS_NATIVE) {
+      window.addEventListener('beforeunload', function (e) {
+        if (state.dirty) { e.preventDefault(); e.returnValue = ''; }
+      });
+    }
+  }
+
+  /* =============================== الإقلاع =============================== */
+  function boot() {
+    applyAll();
+    bind();
+    setupScrollSpy();
+
+    if (HAS_NATIVE) {
+      // ملف مُمرَّر من ويندوز (فتح بواسطة…)
+      N.onOpenPath(function (r) { if (r && r.ok) setDoc(r.content, r.path); });
+      N.onMenu(function (action) {
+        if (action === 'open') doOpen();
+        else if (action === 'save') doSave();
+        else if (action === 'save-then-close') {
+          state.pendingClose = true;
+          doSave();
+        }
+      });
+      N.ready();
+    }
+    render();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+})();
+
+</script>
+</body>
+</html>

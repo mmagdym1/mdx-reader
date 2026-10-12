@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مولّد أيقونة MDX Reader</title>
+<style>
+  :root{
+    --bg:#0d1117; --bg2:#161b22; --bg3:#1c2128; --fg:#e6edf3; --fg2:#adbac7;
+    --fg3:#768390; --bd:#30363d; --acc:#58a6ff; --acc2:#1f6feb;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:32px 20px 60px; background:var(--bg); color:var(--fg);
+    font-family:"Segoe UI","IBM Plex Sans Arabic",Tahoma,sans-serif; line-height:1.9;
+  }
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:24px;margin:0 0 6px}
+  .sub{color:var(--fg3);font-size:14px;margin:0 0 26px}
+  .card{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:22px;margin-bottom:18px}
+  h2{font-size:16px;margin:0 0 14px;color:var(--fg2)}
+  .previews{display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap;padding:14px 0}
+  .pv{text-align:center}
+  .pv canvas{background:#fff2;border-radius:8px;image-rendering:auto;display:block;margin:0 auto 6px}
+  .pv span{font-size:11px;color:var(--fg3)}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  button{
+    font-family:inherit;font-size:14px;padding:10px 18px;border-radius:9px;cursor:pointer;
+    border:1px solid var(--bd);background:var(--bg3);color:var(--fg2);transition:.15s;
+  }
+  button:hover{background:#21262d;color:var(--fg)}
+  button.primary{background:var(--acc2);border-color:var(--acc2);color:#fff;font-weight:600}
+  button.primary:hover{filter:brightness(1.14);color:#fff}
+  .drop{
+    border:2px dashed var(--bd);border-radius:12px;padding:26px;text-align:center;
+    color:var(--fg3);font-size:14px;cursor:pointer;transition:.15s;
+  }
+  .drop:hover,.drop.over{border-color:var(--acc);color:var(--acc);background:#58a6ff14}
+  ol{padding-inline-start:22px;margin:0}
+  li{margin:8px 0;font-size:14.5px;color:var(--fg2)}
+  code{
+    font-family:Consolas,monospace;background:#6e768147;padding:2px 7px;border-radius:5px;
+    font-size:13px;direction:ltr;unicode-bidi:isolate;
+  }
+  .ok{color:#3fb950}
+  .note{font-size:13px;color:var(--fg3);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>🎨 مولّد أيقونة MDX Reader</h1>
+  <p class="sub">يحوّل التصميم (أو أي صورة عندك) إلى ملف <code>.ico</code> بكل المقاسات اللي ويندوز محتاجها — كل حاجة بتتم على جهازك، من غير إنترنت.</p>
+
+  <div class="card">
+    <h2>المعاينة</h2>
+    <div class="previews" id="previews"></div>
+    <div class="btns">
+      <button class="primary" id="btnIco">⬇️ تحميل icon.ico</button>
+      <button id="btnPng">⬇️ تحميل icon.png (256px)</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>عايز تستخدم صورة من عندك؟</h2>
+    <div class="drop" id="drop">
+      اسحب صورة هنا (PNG / JPG / SVG) — أو اضغط للاختيار
+      <br><span style="font-size:12.5px">يُفضّل صورة مربّعة 512×512 أو أكبر</span>
+    </div>
+    <input type="file" id="picker" accept="image/*,.svg" hidden>
+    <div class="btns"><button id="btnReset">↩ رجوع للتصميم الأصلي</button></div>
+  </div>
+
+  <div class="card">
+    <h2>الخطوات بعد التحميل</h2>
+    <ol>
+      <li>حطّ <code>icon.ico</code> جوّه المجلد <code>MarkdownReader\build\</code> (نفس مكان الملف ده).</li>
+      <li>حطّ <code>icon.png</code> جوّه المجلد <code>MarkdownReader\app\</code>.</li>
+      <li>شغّل <code>Build-EXE.bat</code> بـ Run as administrator تاني.</li>
+      <li>نصّب النسخة الجديدة — الأيقونة هتظهر على البرنامج وعلى كل ملفات <code>.md</code>.</li>
+    </ol>
+    <p class="note">لو الأيقونة القديمة فضلت ظاهرة بعد التثبيت، ده كاش ويندوز: شغّل <code>ie4uinit.exe -show</code> من نافذة Run، أو اعمل Restart.</p>
+  </div>
+
+</div>
+
+<script>
+const SIZES = [16, 24, 32, 48, 64, 128, 256];
+
+const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="0.55" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="sh" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0b1020" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect x="6" y="6" width="244" height="244" rx="56" fill="url(#bg)"/>
+  <rect x="6" y="6" width="244" height="244" rx="56" fill="url(#gloss)"/>
+  <g filter="url(#sh)">
+    <rect x="52" y="42" width="152" height="172" rx="16" fill="#ffffff"/>
+  </g>
+  <rect x="118" y="66" width="66" height="9" rx="4.5" fill="#c7d2fe"/>
+  <rect x="72"  y="86" width="52" height="9" rx="4.5" fill="#e0e7ff"/>
+  <path d="M70 176 V116 H86 L104 140 L122 116 H138 V176 H122 V142 L104 164 L86 142 V176 Z" fill="url(#mark)"/>
+  <path d="M156 116 h16 v34 h16 l-24 30 l-24 -30 h16 z" fill="url(#mark)"/>
+</svg>`;
+
+let sourceImage = null;
+
+function loadImage(src) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = src;
+  });
+}
+
+async function loadDefault() {
+  const url = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(SVG)));
+  sourceImage = await loadImage(url);
+  drawPreviews();
+}
+
+function renderSize(size) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  // حافظ على النسبة ووسّط الصورة
+  const iw = sourceImage.naturalWidth || sourceImage.width;
+  const ih = sourceImage.naturalHeight || sourceImage.height;
+  const scale = Math.min(size / iw, size / ih);
+  const w = iw * scale, h = ih * scale;
+  ctx.drawImage(sourceImage, (size - w) / 2, (size - h) / 2, w, h);
+  return c;
+}
+
+function drawPreviews() {
+  const box = document.getElementById('previews');
+  box.innerHTML = '';
+  [256, 128, 64, 48, 32, 16].forEach(s => {
+    const c = renderSize(s);
+    c.style.width = s + 'px';
+    c.style.height = s + 'px';
+    const d = document.createElement('div');
+    d.className = 'pv';
+    d.appendChild(c);
+    const lbl = document.createElement('span');
+    lbl.textContent = s + '×' + s;
+    d.appendChild(lbl);
+    box.appendChild(d);
+  });
+}
+
+function canvasToPngBytes(canvas) {
+  return new Promise(res => {
+    canvas.toBlob(b => b.arrayBuffer().then(ab => res(new Uint8Array(ab))), 'image/png');
+  });
+}
+
+async function buildIco() {
+  const pngs = [];
+  for (const s of SIZES) pngs.push({ size: s, data: await canvasToPngBytes(renderSize(s)) });
+
+  const headerSize = 6 + 16 * pngs.length;
+  const total = headerSize + pngs.reduce((a, p) => a + p.data.length, 0);
+  const buf = new ArrayBuffer(total);
+  const dv = new DataView(buf);
+  const u8 = new Uint8Array(buf);
+
+  dv.setUint16(0, 0, true);              // reserved
+  dv.setUint16(2, 1, true);              // type = icon
+  dv.setUint16(4, pngs.length, true);    // count
+
+  let offset = headerSize;
+  pngs.forEach((p, i) => {
+    const e = 6 + i * 16;
+    u8[e]     = p.size >= 256 ? 0 : p.size;   // width  (0 = 256)
+    u8[e + 1] = p.size >= 256 ? 0 : p.size;   // height
+    u8[e + 2] = 0;                            // palette
+    u8[e + 3] = 0;                            // reserved
+    dv.setUint16(e + 4, 1, true);             // color planes
+    dv.setUint16(e + 6, 32, true);            // bits per pixel
+    dv.setUint32(e + 8, p.data.length, true); // size
+    dv.setUint32(e + 12, offset, true);       // offset
+    u8.set(p.data, offset);
+    offset += p.data.length;
+  });
+
+  return new Blob([buf], { type: 'image/x-icon' });
+}
+
+function save(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+document.getElementById('btnIco').addEventListener('click', async e => {
+  const b = e.target;
+  const old = b.textContent;
+  b.textContent = '... جارٍ التجهيز';
+  save(await buildIco(), 'icon.ico');
+  b.textContent = '✅ تم — icon.ico';
+  setTimeout(() => { b.textContent = old; }, 2200);
+});
+
+document.getElementById('btnPng').addEventListener('click', () => {
+  renderSize(256).toBlob(b => save(b, 'icon.png'), 'image/png');
+});
+
+// صورة من المستخدم
+const drop = document.getElementById('drop');
+const picker = document.getElementById('picker');
+
+async function useFile(file) {
+  if (!file) return;
+  const url = await new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result));
+    r.readAsDataURL(file);
+  });
+  try {
+    sourceImage = await loadImage(url);
+    drawPreviews();
+    drop.innerHTML = '<span class="ok">✓ تم تحميل: ' + file.name + '</span>';
+  } catch (err) {
+    drop.textContent = '⚠ تعذّر قراءة الصورة، جرّب صيغة تانية.';
+  }
+}
+
+drop.addEventListener('click', () => picker.click());
+picker.addEventListener('change', e => useFile(e.target.files[0]));
+['dragenter', 'dragover'].forEach(ev =>
+  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev =>
+  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => useFile(e.dataTransfer.files[0]));
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  drop.innerHTML = 'اسحب صورة هنا (PNG / JPG / SVG) — أو اضغط للاختيار<br><span style="font-size:12.5px">يُفضّل صورة مربّعة 512×512 أو أكبر</span>';
+  loadDefault();
+});
+
+loadDefault();
+</script>
+</body>
+</html>

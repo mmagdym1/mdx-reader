@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MDX Reader — Arabic &amp; RTL Markdown Viewer and Editor</title>
+<meta name="description" content="Offline Markdown viewer and editor for Windows and the web, with correct mixed Arabic-English bidi rendering, smart RTL detection, and zero runtime dependencies.">
+<meta name="theme-color" content="#4f46e5">
+<link rel="canonical" href="https://mmagdym1.github.io/mdx-reader/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MDX Reader">
+<meta property="og:title" content="MDX Reader — Arabic &amp; RTL Markdown Viewer and Editor">
+<meta property="og:description" content="Read and edit mixed Arabic-English Markdown without broken direction or punctuation. Offline and dependency-free at runtime.">
+<meta property="og:url" content="https://mmagdym1.github.io/mdx-reader/">
+<meta property="og:image" content="https://mmagdym1.github.io/mdx-reader/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MDX Reader — Arabic &amp; RTL Markdown Viewer and Editor">
+<meta name="twitter:description" content="Correct mixed Arabic-English Markdown rendering in an offline Windows app and web version.">
+<meta name="twitter:image" content="https://mmagdym1.github.io/mdx-reader/og-image.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ============================ شريط الأدوات ============================ -->
+  <div class="toolbar">
+    <div class="brand"><span class="dot"></span><span>MDX</span></div>
+
+    <button class="btn" id="btnOpen"    title="Ctrl+O"><span class="ico">📂</span><span data-i18n="open">فتح</span></button>
+    <button class="btn" id="btnSave"    title="Ctrl+S"><span class="ico">💾</span><span data-i18n="save">حفظ</span></button>
+    <button class="btn" id="btnSaveAs"  title="Ctrl+Shift+S"><span class="ico">📄</span><span data-i18n="saveAs">حفظ باسم</span></button>
+
+    <div class="tb-sep"></div>
+
+    <div class="seg" id="viewSeg">
+      <button class="btn active" data-view="preview" title="Ctrl+1"><span data-i18n="viewPreview">معاينة</span></button>
+      <button class="btn"        data-view="split"   title="Ctrl+2"><span data-i18n="viewSplit">مقسوم</span></button>
+      <button class="btn"        data-view="editor"  title="Ctrl+3"><span data-i18n="viewEditor">تحرير</span></button>
+    </div>
+
+    <button class="btn active" id="btnToc" title="Ctrl+\"><span class="ico">☰</span><span data-i18n="toc">الفهرس</span></button>
+
+    <div class="tb-sep"></div>
+
+    <input class="search-input" id="search" type="search" data-i18n-ph="searchPh" placeholder="بحث في المستند…">
+    <button class="btn" id="btnPrev" title="Shift+Enter">▲</button>
+    <button class="btn" id="btnNext" title="Enter">▼</button>
+    <span class="sb-item" id="searchCount" style="font-size:11.5px;color:var(--fg-3)"></span>
+
+    <div class="spacer"></div>
+
+    <!-- لغة الواجهة -->
+    <select class="select" id="uiLang" title="لغة الواجهة / UI language">
+      <option value="ar">🌐 العربية</option>
+      <option value="en">🌐 English</option>
+    </select>
+
+    <!-- اتجاه العرض -->
+    <select class="select" id="dirSel" title="اتجاه النص">
+      <option value="smart" data-i18n="dirSmart">🧠 ذكي — عربي = RTL</option>
+      <option value="rtl"   data-i18n="dirRtl">→ فرض من اليمين لليسار</option>
+      <option value="ltr"   data-i18n="dirLtr">← فرض من اليسار لليمين</option>
+      <option value="auto"  data-i18n="dirAuto">↔ حسب أول حرف</option>
+    </select>
+
+    <!-- الثيم -->
+    <select class="select" id="themeSel" title="المظهر">
+      <option value="dark"     data-i18n="thDark">🌙 داكن</option>
+      <option value="midnight" data-i18n="thMid">🌌 ليلي</option>
+      <option value="light"    data-i18n="thLight">☀️ فاتح</option>
+      <option value="sepia"    data-i18n="thSepia">📜 سيبيا</option>
+    </select>
+
+    <button class="btn" id="btnSettings" title="Ctrl+,"><span class="ico">⚙️</span></button>
+    <button class="btn" id="btnPrint" title="Ctrl+P"><span class="ico">🖨️</span></button>
+  </div>
+
+  <!-- ============================= شريط المسار ============================ -->
+  <div class="pathbar" id="pathbar">
+    <span class="dirty-dot"></span>
+    <span class="file-name" id="fileName" data-i18n="noFile">لا يوجد ملف مفتوح</span>
+    <span class="file-path" id="filePath"></span>
+  </div>
+
+  <!-- ============================== المحتوى ============================== -->
+  <div class="main" id="main">
+    <nav class="toc" id="toc">
+      <h4 data-i18n="outline">محتويات المستند</h4>
+      <div id="tocList"></div>
+    </nav>
+
+    <div class="panes" id="panes">
+      <div class="pane pane-editor" id="paneEditor">
+        <textarea id="editor" spellcheck="false" data-i18n-ph="editorPh"
+          placeholder="اكتب هنا بالعربي أو English بحرية…"></textarea>
+      </div>
+      <div class="pane pane-preview" id="panePreview">
+        <div class="md-body" id="preview">
+          <div class="welcome" id="welcome">
+            <div class="big">📖</div>
+            <h2 data-i18n="welcomeTitle">عارض ومحرر Markdown بدعم عربي كامل</h2>
+            <p data-i18n="welcomeText">افتح ملف <b>.md</b> أو اسحبه وأفلته هنا. النص العربي والإنجليزي المختلط يُعرض بشكل صحيح تلقائيًا.</p>
+            <div class="kbds">
+              <kbd>Ctrl+O</kbd><kbd>Ctrl+S</kbd><kbd>Ctrl+2</kbd><kbd>Ctrl+F</kbd><kbd>Ctrl+,</kbd>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================= شريط الحالة ============================ -->
+  <div class="statusbar">
+    <span class="sb-item"><span data-i18n="words">كلمات</span>: <b id="stWords">0</b></span>
+    <span class="sb-item"><span data-i18n="chars">حروف</span>: <b id="stChars">0</b></span>
+    <span class="sb-item"><span data-i18n="lines">أسطر</span>: <b id="stLines">0</b></span>
+    <span class="sb-item"><span data-i18n="readTime">وقت القراءة</span>: <b id="stRead">0</b></span>
+    <div class="spacer"></div>
+    <span class="sb-item" id="stMode">—</span>
+    <span class="sb-item" id="stSaved"></span>
+  </div>
+</div>
+
+<!-- ============================ السحب والإفلات =========================== -->
+<div class="dropzone" id="dropzone"><span data-i18n="dropHere">أفلت ملف .md هنا</span></div>
+
+<!-- ============================== التنبيهات ============================== -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================== الإعدادات ============================== -->
+<div class="modal-back" id="settingsBack">
+  <div class="modal">
+    <h3 data-i18n="settings">الإعدادات</h3>
+    <p class="sub" data-i18n="settingsSub">كل الإعدادات تُحفظ تلقائيًا</p>
+
+    <div class="row">
+      <label>
+        <span data-i18n="fontFamily">خط العرض</span>
+        <span class="hint" data-i18n="fontFamilyHint">اختر خطًا مثبتًا على جهازك</span>
+      </label>
+      <select class="select" id="fontSel">
+        <option value='"Segoe UI","IBM Plex Sans Arabic","Noto Sans Arabic",Tahoma,sans-serif'>Segoe UI (افتراضي)</option>
+        <option value='Tahoma,"Segoe UI",sans-serif'>Tahoma</option>
+        <option value='"IBM Plex Sans Arabic","Segoe UI",sans-serif'>IBM Plex Sans Arabic</option>
+        <option value='"Noto Naskh Arabic","Traditional Arabic",serif'>Noto Naskh Arabic</option>
+        <option value='"Dubai","Segoe UI",sans-serif'>Dubai</option>
+        <option value='"Cairo","Segoe UI",sans-serif'>Cairo</option>
+        <option value='"Amiri","Traditional Arabic",serif'>Amiri</option>
+        <option value='"Traditional Arabic",serif'>Traditional Arabic</option>
+        <option value='"Arial",sans-serif'>Arial</option>
+        <option value='"Times New Roman",serif'>Times New Roman</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label><span data-i18n="fontSize">حجم الخط</span> <span class="hint"><span id="fsVal">17</span> px</span></label>
+      <input type="range" id="fontSize" min="12" max="30" step="1" value="17">
+    </div>
+
+    <div class="row">
+      <label><span data-i18n="lineHeight">تباعد الأسطر</span> <span class="hint"><span id="lhVal">2.0</span></span></label>
+      <input type="range" id="lineHeight" min="1.4" max="2.8" step="0.1" value="2">
+    </div>
+
+    <div class="row">
+      <label><span data-i18n="contentWidth">عرض النص</span> <span class="hint"><span id="cwVal">900</span> px</span></label>
+      <input type="range" id="contentWidth" min="600" max="1600" step="20" value="900">
+    </div>
+
+    <div class="row">
+      <label><span data-i18n="syncScroll">تزامن التمرير في الوضع المقسوم</span></label>
+      <input type="checkbox" id="syncScroll" checked>
+    </div>
+
+    <div class="row">
+      <label>
+        <span data-i18n="autoSave">حفظ تلقائي</span>
+        <span class="hint" data-i18n="autoSaveHint">يحفظ الملف بعد ثانيتين من آخر تعديل</span>
+      </label>
+      <input type="checkbox" id="autoSave">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" id="btnExportHtml"><span data-i18n="exportHtml">تصدير HTML</span></button>
+      <button class="btn" id="btnResetSettings"><span data-i18n="reset">استعادة الافتراضي</span></button>
+      <button class="btn primary" id="btnCloseSettings"><span data-i18n="done">تم</span></button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="filePicker" accept=".md,.markdown,.mdown,.mkd,.txt,.mdx" style="display:none">
+
+<script src="markdown.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+{
+  "name": "mdx-reader",
+  "version": "1.1.0",
+  "description": "Markdown viewer and editor with first-class Arabic/RTL support",
+  "main": "main.js",
+  "author": "Tariq",
+  "license": "MIT",
+  "private": true,
+  "homepage": "https://mmagdym1.github.io/mdx-reader/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mmagdym1/mdx-reader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mmagdym1/mdx-reader/issues"
+  },
+  "keywords": [
+    "markdown",
+    "markdown-editor",
+    "markdown-viewer",
+    "arabic",
+    "rtl",
+    "bidi",
+    "electron",
+    "offline"
+  ],
+  "scripts": {
+    "start": "electron .",
+    "standalone": "node build-standalone.js",
+    "dist": "electron-builder --win --x64",
+    "portable": "electron-builder --win portable --x64"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.tariq.mdxreader",
+    "productName": "MDX Reader",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "preload.js", "app/**/*", "package.json"],
+    "fileAssociations": [
+      {
+        "ext": ["md", "markdown", "mdown", "mkd", "mdx"],
+        "name": "Markdown Document",
+        "description": "Markdown Document",
+        "role": "Editor",
+        "icon": "build/icon.ico"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "artifactName": "MDX-Reader-Setup-${version}.${ext}",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MDX Reader",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
+    },
+    "portable": {
+      "artifactName": "MDX-Reader-Portable-${version}.${ext}"
+    }
+  }
+}
