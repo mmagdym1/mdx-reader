@@ -158,4 +158,4 @@ Bug reports and focused pull requests are welcome. Read [CONTRIBUTING.md](CONTRI
 
 ## License
 
-MIT © Tariq. See [LICENSE](LICENSE).
+MIT © Mohamed Reyad. See [LICENSE](LICENSE).
