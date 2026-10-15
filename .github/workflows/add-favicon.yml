@@ -1,0 +1,46 @@
+name: Install project favicon
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/add-favicon.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Add favicon to source HTML
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('app/index.html')
+          s = p.read_text(encoding='utf-8')
+          tag = '<link rel="icon" type="image/svg+xml" href="repo-icon.svg?v=2">\n'
+          if 'rel="icon"' not in s:
+              s = s.replace('<head>\n', '<head>\n' + tag, 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Rebuild standalone pages
+        run: |
+          npm ci
+          npm run standalone
+
+      - name: Commit favicon updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/index.html MDX-Reader-Standalone.html docs/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Add browser favicon"
+          git push
