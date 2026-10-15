@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="repo-icon.svg" width="180" alt="MDX Reader icon" />
+
 # MDX Reader
 
 **A Markdown viewer and editor that renders mixed Arabic-English text correctly.**  
