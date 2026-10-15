@@ -6,13 +6,13 @@
   "author": "Tariq",
   "license": "MIT",
   "private": true,
-  "homepage": "https://mmagdym1.github.io/mdx-reader/",
+  "homepage": "https://reyad-dev.github.io/mdx-reader/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mmagdym1/mdx-reader.git"
+    "url": "git+https://github.com/reyad-dev/mdx-reader.git"
   },
   "bugs": {
-    "url": "https://github.com/mmagdym1/mdx-reader/issues"
+    "url": "https://github.com/reyad-dev/mdx-reader/issues"
   },
   "keywords": [
     "markdown",
